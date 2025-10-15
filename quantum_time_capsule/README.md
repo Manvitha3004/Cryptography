@@ -10,29 +10,55 @@ Features:
 - Verify signatures and decrypt after unlock date
 - CLI interface (capsule_main.py)
 - GUI interface (gui_main.py)
+- Web interface (React frontend with Flask API)
 
 Installation:
 1. Install Python >= 3.9
 2. Install dependencies: pip install -r requirements.txt
    Note: liboqs-python may require additional setup on Windows.
    If installation fails, you may need to install liboqs separately or use WSL.
-3. Run CLI: python capsule_main.py
-   Run GUI: python gui_main.py
+3. Install Node.js >= 14
+4. cd frontend && npm install
+
+Running the Application:
+
+# Start the Flask API backend
+python api.py
+
+# In a new terminal, start the React frontend
+cd frontend && npm start
+
+# Alternative: Run CLI version
+python capsule_main.py
+
+# Alternative: Run GUI version
+python gui_main.py
 
 Usage:
 - Generate keys first
 - Create a capsule with a message and unlock date
 - Decrypt only after the unlock date has passed
 
+The web interface provides a modern UI for all operations, with output displayed in the frontend.
+
 Run Commands:
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
-# Run CLI version
+# Install frontend dependencies
+cd frontend && npm install
+
+# Start backend API
+python api.py
+
+# Start frontend (in new terminal)
+cd frontend && npm start
+
+# CLI version
 python capsule_main.py
 
-# Run GUI version
+# GUI version
 python gui_main.py
 
 # Test key generation (CLI)
