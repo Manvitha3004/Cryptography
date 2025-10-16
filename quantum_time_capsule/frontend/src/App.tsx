@@ -93,7 +93,7 @@ function App() {
   const handleDecryptCapsule = async () => {
     const index = parseInt(capsuleIndex);
     if (isNaN(index) || index < 1) {
-      appendOutput('❌ Invalid capsule index.\n\n');
+      appendOutput('❌ Invalid capsule index. Please enter a valid number.\n\n');
       return;
     }
     try {
@@ -102,21 +102,23 @@ function App() {
       });
       if (response.data.success) {
         appendOutput(`${response.data.message}\n`);
-        appendOutput(`Message: ${response.data.decrypted_message}\n`);
-        appendOutput('✅ Signature verified (Dilithium2)\n\n');
+        appendOutput(`📬 Decrypted Message:\n${response.data.decrypted_message}\n\n`);
+        appendOutput(`⏰ Timestamp: ${response.data.timestamp}\n`);
+        appendOutput(`📅 Unlock Date: ${response.data.unlock_date}\n`);
+        appendOutput(`✅ Signature verified - Capsule is authentic!\n\n`);
         setCapsuleIndex('');
       } else {
         appendOutput(`❌ Error: ${response.data.error}\n\n`);
       }
-    } catch (error) {
-      appendOutput(`❌ Error decrypting capsule: ${error}\n\n`);
+    } catch (error: any) {
+      appendOutput(`❌ Error decrypting capsule: ${error.message || error}\n\n`);
     }
   };
 
   const handleVerifyCapsule = async () => {
     const index = parseInt(capsuleIndex);
     if (isNaN(index) || index < 1) {
-      appendOutput('❌ Invalid capsule index.\n\n');
+      appendOutput('❌ Invalid capsule index. Please enter a valid number.\n\n');
       return;
     }
     try {
@@ -125,12 +127,15 @@ function App() {
       });
       if (response.data.success) {
         appendOutput(`${response.data.message}\n\n`);
+        appendOutput(`⏰ Timestamp: ${response.data.timestamp}\n`);
+        appendOutput(`📅 Unlock Date: ${response.data.unlock_date}\n`);
+        appendOutput(`Verified: ${response.data.verified ? '✅ Yes' : '❌ No'}\n\n`);
         setCapsuleIndex('');
       } else {
         appendOutput(`❌ Error: ${response.data.error}\n\n`);
       }
-    } catch (error) {
-      appendOutput(`❌ Error verifying capsule: ${error}\n\n`);
+    } catch (error: any) {
+      appendOutput(`❌ Error verifying capsule: ${error.message || error}\n\n`);
     }
   };
 
@@ -234,18 +239,18 @@ function App() {
         
         {/* Create Capsule Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in-down border border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-blue-600 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-8 border border-gray-300 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start mb-8">
+                <h2 className="text-2xl font-bold text-green-600 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mr-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   Create New Time Capsule
                 </h2>
                 <button 
                   onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none p-1 rounded-full hover:bg-gray-100"
+                  className="text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
                   aria-label="Close"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -254,82 +259,56 @@ function App() {
                 </button>
               </div>
               
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
                     Message for Capsule:
                   </label>
-                  <div className="relative bg-gray-50 rounded-lg shadow-inner">
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-transparent"
-                      rows={5}
-                      placeholder="Enter your message..."
-                    />
-                    <div className="absolute bottom-3 right-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 italic">This message will be encrypted with quantum-safe encryption</p>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    rows={5}
+                    placeholder="Enter your message..."
+                  />
+                  <p className="mt-2 text-xs text-gray-600">This message will be encrypted with quantum-safe encryption</p>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Unlock Date (YYYY-MM-DD):
                   </label>
-                  <div className="relative bg-gray-50 rounded-lg shadow-inner">
-                    <input
-                      type="date"
-                      value={unlockDate}
-                      onChange={(e) => setUnlockDate(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 bg-transparent"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 italic">The capsule can only be decrypted after this date</p>
+                  <input
+                    type="date"
+                    value={unlockDate}
+                    onChange={(e) => setUnlockDate(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                  <p className="mt-2 text-xs text-gray-600">The capsule can only be decrypted after this date</p>
                 </div>
                 
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Secured with quantum-resistant encryption
-                      </span>
-                    </div>
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={closeModal}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors shadow-sm"
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        onClick={handleCreateCapsule}
-                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-colors flex items-center shadow-md"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Create Capsule
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex gap-3 justify-end">
+                  <button 
+                    onClick={closeModal}
+                    className="px-6 py-2 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleCreateCapsule}
+                    className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Create Capsule
+                  </button>
                 </div>
               </div>
             </div>

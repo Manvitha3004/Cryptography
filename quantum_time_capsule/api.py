@@ -113,11 +113,15 @@ def api_decrypt_capsule():
         message = decrypt_message(capsule['ciphertext'], aes_key)
         return jsonify({
             "success": True,
-            "message": "Decryption Successful!",
+            "message": "✅ Decryption Successful!",
             "decrypted_message": message,
-            "signature_verified": True
+            "signature_verified": True,
+            "timestamp": capsule['timestamp'],
+            "unlock_date": capsule['unlock_date']
         })
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_capsule', methods=['POST'])
@@ -145,7 +149,9 @@ def api_verify_capsule():
     return jsonify({
         "success": True,
         "verified": verified,
-        "message": "Signature verified - capsule is authentic" if verified else "Signature verification failed - capsule may be tampered"
+        "message": "✅ Signature verified - Capsule is authentic!" if verified else "❌ Signature verification failed - Capsule may be tampered",
+        "timestamp": capsule['timestamp'],
+        "unlock_date": capsule['unlock_date']
     })
 
 if __name__ == '__main__':
