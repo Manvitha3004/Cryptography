@@ -1,88 +1,101 @@
-"""
-Quantum-Safe Digital Time Capsule
+# 🔐 Quantum-Safe Digital Time Capsule
 
-This project demonstrates post-quantum cryptography using Kyber512 for key encapsulation
-and Dilithium2 for digital signatures, combined with AES encryption for a secure time capsule.
+A **post-quantum secure** digital time capsule that lets you encrypt a message (or file) today and ensure it can **only be opened after a specified future date** — even in a world with powerful quantum computers.
 
-Features:
-- Generate PQC key pairs (Kyber512 + Dilithium2)
-- Create encrypted capsules with time-lock
-- Verify signatures and decrypt after unlock date
-- CLI interface (capsule_main.py)
-- GUI interface (gui_main.py)
-- Web interface (React frontend with Flask API)
+Built with NIST-approved **post-quantum cryptography**:
+- **Kyber512** – Quantum-resistant key encapsulation (KEM)
+- **Dilithium2** – Quantum-resistant digital signatures
+- **AES-256-GCM** – Fast and secure symmetric encryption
+- **Time-lock puzzle** – Prevents decryption before the unlock date
 
-Installation:
-1. Install Python >= 3.9
-2. Install dependencies: pip install -r requirements.txt
-   Note: liboqs-python may require additional setup on Windows.
-   If installation fails, you may need to install liboqs separately or use WSL.
-3. Install Node.js >= 14
-4. cd frontend && npm install
+Multiple interfaces:
+- Modern **Web UI** (React + Flask)
+- Interactive **CLI**
+- Simple **GUI** (Tkinter)
 
-Running the Application:
+Perfect for long-term secrets, wills, predictions, love letters to your future self, or blockchain-free timestamped messages.
 
-# Start the Flask API backend
+---
+
+### Features
+
+- Fully quantum-resistant encryption & signing
+- Enforced time-lock (cannot decrypt early, even with private keys)
+- Sign & verify message authenticity
+- Store text or files
+- Three ways to interact: Web, GUI, CLI
+- No blockchain, no third-party, 100% offline-capable
+
+---
+
+### Installation
+
+#### Prerequisites
+- Python ≥ 3.9
+- Node.js ≥ 14
+- Git
+
+#### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/quantum-time-capsule.git
+cd quantum-time-capsule
+2. Install Python dependencies
+Bashpip install -r requirements.txt
+Windows users: liboqs-python may require extra steps.
+If installation fails → use WSL2 (recommended) or pre-built wheels from https://github.com/open-quantum-safe/liboqs-python
+3. Install frontend (React)
+Bashcd frontend
+npm install
+cd ..
+
+Running the Application
+Option 1: Web Interface (Recommended)
+Bash# Terminal 1 – Start Flask backend
 python api.py
 
-# In a new terminal, start the React frontend
+# Terminal 2 – Start React frontend
 cd frontend && npm start
+Then open → http://localhost:3000
+Option 2: Desktop GUI
+Bashpython gui_main.py
+Option 3: Command Line Interface
+Bashpython capsule_main.py
 
-# Alternative: Run CLI version
-python capsule_main.py
-
-# Alternative: Run GUI version
-python gui_main.py
-
-Usage:
-- Generate keys first
-- Create a capsule with a message and unlock date
-- Decrypt only after the unlock date has passed
-
-The web interface provides a modern UI for all operations, with output displayed in the frontend.
-
-Run Commands:
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install frontend dependencies
-cd frontend && npm install
-
-# Start backend API
-python api.py
-
-# Start frontend (in new terminal)
-cd frontend && npm start
-
-# CLI version
-python capsule_main.py
-
-# GUI version
-python gui_main.py
-
-# Test key generation (CLI)
+Quick CLI Test (Instant Demo)
+Bash# 1. Generate keys
 echo "1" | python capsule_main.py
 
-# Test capsule creation (CLI)
-echo -e "2\nHello, future world!\n2035-01-01\n0" | python capsule_main.py
+# 2. Create a capsule (unlocks on Jan 1, 2035)
+echo -e "2\nHello from the past! Quantum computers are here.\n2035-01-01\n0" | python capsule_main.py
 
-# Test decryption after unlock date (CLI)
+# 3. Try to decrypt now → Will fail (too early)
 echo -e "4\n1\n0" | python capsule_main.py
 
-# Test signature verification (CLI)
-echo -e "5\n1\n0" | python capsule_main.py
+# 4. After 2035 → Same command will succeed
+# → "Hello from the past! Quantum computers are here."
 
-Security Notes:
-- Kyber512 provides quantum-resistant key encapsulation
-- Dilithium2 provides quantum-resistant digital signatures
-- AES provides fast symmetric encryption
-- Time-lock prevents early decryption
 
-Example Run:
-✅ PQC Keys generated (Kyber512 + Dilithium2)
-🔒 Capsule created successfully (unlock date: 2035-01-01)
-⏳ Capsule locked until unlock date
-🔓 Decryption Successful — message: "Hello, future world!"
-✅ Signature verified and integrity confirmed
-"""
+Component Algorithm Security Level Quantum Resistant?Key ExchangeKyber512~AES-128 equivalentYesDigital SignatureDilithium2EUF-CMA secureYesEncryptionAES-256-GCMVery highNo (but protected by Kyber)Time LockDelay functionConfigurable difficultyYes
+
+Project Structure
+text├── api.py                  # Flask backend (REST API)
+├── capsule_core.py         # Core crypto logic
+├── capsule_main.py         # CLI interface
+├── gui_main.py             # Tkinter GUI
+├── frontend/               # React web app
+├── keys/                   # Generated keys (gitignored)
+├── capsules/               # Encrypted capsules (gitignored)
+└── requirements.txt
+
+Contributing
+Contributions are welcome! Feel free to:
+
+Improve the UI/UX
+Add more PQC algorithms (Falcon, SPHINCS+, etc.)
+Add file attachment support
+Dockerize the app
+
+Just fork → make changes → open a PR
+
+License
+MIT License – feel free to use, modify, and distribute
