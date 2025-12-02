@@ -1,0 +1,1401 @@
+================================================================================
+                    QUANTUM-SAFE DIGITAL TIME CAPSULE
+                     TECHNICAL SPECIFICATIONS DOCUMENT
+================================================================================
+
+DOCUMENT INFORMATION
+================================================================================
+Document Title: Technical Specifications
+Project: Quantum-Safe Digital Time Capsule
+Version: 1.0
+Date: November 27, 2025
+Purpose: Detailed technical reference for developers and system architects
+
+TABLE OF CONTENTS
+================================================================================
+1. System Overview
+2. Technical Requirements
+3. Cryptographic Implementation Details
+4. API Specifications
+5. Database Schema
+6. File System Organization
+7. Security Architecture
+8. Performance Specifications
+9. Error Handling
+10. Testing Requirements
+11. Deployment Architecture
+12. Code Standards
+
+
+1. SYSTEM OVERVIEW
+================================================================================
+
+1.1 SYSTEM PURPOSE
+------------------
+The Quantum-Safe Digital Time Capsule is a cryptographic demonstration
+application that showcases time-locked encryption with quantum-resistant
+cryptographic principles. It serves as:
+
+- Educational tool for post-quantum cryptography concepts
+- Proof-of-concept for time-locked encryption systems
+- Demonstration of hybrid cryptographic systems
+- Reference implementation for secure message storage
+
+1.2 SYSTEM ARCHITECTURE
+-----------------------
+Type: Three-tier web application
+Architecture Pattern: Client-Server with REST API
+Communication: HTTP/HTTPS with JSON payloads
+Storage: File-based (JSON)
+Deployment: Single-server or containerized
+
+Architecture Diagram:
+
+┌─────────────────────────────────────────────────────────────┐
+│                    PRESENTATION LAYER                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   React      │  │   Tkinter    │  │     CLI      │      │
+│  │  Frontend    │  │     GUI      │  │  Interface   │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+                           │ HTTP/JSON
+┌─────────────────────────────────────────────────────────────┐
+│                    APPLICATION LAYER                         │
+│  ┌──────────────────────────────────────────────────┐       │
+│  │              Flask REST API Server               │       │
+│  └──────────────────────────────────────────────────┘       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  PQC Module  │  │  AES Module  │  │Storage Module│      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+                           │ File I/O
+┌─────────────────────────────────────────────────────────────┐
+│                      DATA LAYER                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  Keys JSON   │  │  Capsules    │  │   Backups    │      │
+│  │    Files     │  │  JSON Files  │  │   ZIP Files  │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+└─────────────────────────────────────────────────────────────┘
+
+
+2. TECHNICAL REQUIREMENTS
+================================================================================
+
+2.1 SOFTWARE REQUIREMENTS
+--------------------------
+
+Backend:
+- Python Version: 3.9 or higher (3.11+ recommended)
+- Python Packages:
+  * cryptography >= 41.0.0
+  * Flask >= 2.3.0
+  * flask-cors >= 4.0.0
+
+Frontend:
+- Node.js: 14.x or higher (18.x LTS recommended)
+- npm: 6.x or higher
+- Modern web browser:
+  * Chrome 90+
+  * Firefox 88+
+  * Safari 14+
+  * Edge 90+
+
+2.2 HARDWARE REQUIREMENTS
+--------------------------
+
+Minimum:
+- CPU: Dual-core 2.0 GHz
+- RAM: 2 GB
+- Storage: 100 MB (plus capsule storage)
+- Network: 1 Mbps (for web interface)
+
+Recommended:
+- CPU: Quad-core 2.5 GHz or higher
+- RAM: 4 GB or higher
+- Storage: 1 GB SSD
+- Network: 10 Mbps or higher
+
+2.3 OPERATING SYSTEM SUPPORT
+-----------------------------
+- Windows 10/11
+- macOS 11+ (Big Sur and later)
+- Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+)
+
+2.4 BROWSER REQUIREMENTS
+------------------------
+- JavaScript: ES6+ support required
+- localStorage: Required for client-side caching
+- Fetch API: For HTTP requests
+- CSS Grid/Flexbox: For responsive layout
+
+
+3. CRYPTOGRAPHIC IMPLEMENTATION DETAILS
+================================================================================
+
+3.1 KEY GENERATION (RSA + ECDSA)
+---------------------------------
+
+RSA Key Generation:
+Algorithm: RSA
+Key Size: 2048 bits
+Public Exponent: 65537 (0x10001)
+Format: PKCS#8 for private, SubjectPublicKeyInfo for public
+Encoding: PEM, Base64 wrapped
+
+Python Implementation:
+```python
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.backends import default_backend
+
+kem_private = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=2048,
+    backend=default_backend()
+)
+```
+
+ECDSA Key Generation:
+Algorithm: ECDSA
+Curve: SECP256R1 (also known as P-256, prime256v1)
+Key Size: 256 bits
+Format: PKCS#8 for private, SubjectPublicKeyInfo for public
+Encoding: PEM, Base64 wrapped
+
+Python Implementation:
+```python
+from cryptography.hazmat.primitives.asymmetric import ec
+
+sig_private = ec.generate_private_key(
+    ec.SECP256R1(), 
+    default_backend()
+)
+```
+
+3.2 KEY ENCAPSULATION MECHANISM (KEM)
+--------------------------------------
+
+Purpose: Securely generate and transmit AES key
+Method: RSA-OAEP encryption of random AES key
+
+Encapsulation Process:
+1. Generate random 32-byte (256-bit) AES key
+2. Encrypt AES key with RSA public key using OAEP
+3. Return encrypted key (ciphertext) and plaintext key
+
+RSA-OAEP Parameters:
+- Padding: OAEP (Optimal Asymmetric Encryption Padding)
+- Mask Generation Function: MGF1 with SHA-256
+- Hash Algorithm: SHA-256
+- Label: None (empty)
+
+Python Implementation:
+```python
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+import os
+
+shared_secret = os.urandom(32)  # 256-bit key
+
+ciphertext = kem_public.encrypt(
+    shared_secret,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+    )
+)
+```
+
+Decapsulation Process:
+1. Decrypt ciphertext with RSA private key using OAEP
+2. Recover original 32-byte AES key
+3. Return AES key for message decryption
+
+Security Properties:
+- IND-CCA2 secure (Indistinguishability under Adaptive Chosen Ciphertext Attack)
+- Forward secrecy: Each capsule uses unique AES key
+- Key size: 256 bits (equivalent to 128-bit quantum security)
+
+3.3 SYMMETRIC ENCRYPTION (AES VIA FERNET)
+------------------------------------------
+
+Algorithm: Fernet (AES-128 in CBC mode with HMAC)
+Library: cryptography.fernet
+Key Derivation: Uses provided 32-byte key directly
+
+Fernet Specification:
+- Version: 0x80 (1 byte)
+- Timestamp: Current time (8 bytes)
+- IV: Random 16 bytes
+- Ciphertext: AES-128-CBC encrypted data
+- HMAC: SHA-256 over entire token
+
+Encryption Process:
+```python
+from cryptography.fernet import Fernet
+import base64
+
+f = Fernet(aes_key_b64.encode())
+ciphertext = f.encrypt(message.encode())
+```
+
+Decryption Process:
+```python
+f = Fernet(aes_key_b64.encode())
+plaintext = f.decrypt(ciphertext)
+```
+
+Security Properties:
+- Authenticated encryption (AE)
+- Prevents ciphertext tampering
+- Replay attack protection via timestamp
+- 128-bit security level
+
+3.4 DIGITAL SIGNATURES (ECDSA)
+-------------------------------
+
+Algorithm: ECDSA with SHA-256
+Curve: SECP256R1 (P-256)
+Signature Size: 64-70 bytes (variable DER encoding)
+
+Signing Process:
+1. Construct metadata string: "timestamp|unlock_date|ciphertext|kem_ct"
+2. Hash metadata with SHA-256
+3. Sign hash with ECDSA private key
+4. Encode signature as Base64
+
+Python Implementation:
+```python
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+
+signature = sig_private.sign(
+    data.encode(),
+    ec.ECDSA(hashes.SHA256())
+)
+```
+
+Verification Process:
+1. Reconstruct metadata string from capsule
+2. Hash metadata with SHA-256
+3. Verify signature with ECDSA public key
+4. Return True if valid, False otherwise
+
+```python
+try:
+    sig_public.verify(
+        signature, 
+        data.encode(), 
+        ec.ECDSA(hashes.SHA256())
+    )
+    return True
+except:
+    return False
+```
+
+Security Properties:
+- Existential unforgeability under chosen message attack (EUF-CMA)
+- 128-bit security level
+- Non-repudiation: Only private key holder can sign
+
+3.5 ENCODING AND SERIALIZATION
+-------------------------------
+
+All binary data is encoded for JSON storage:
+
+Base64 Standard Encoding:
+- Used for: Keys, signatures, KEM ciphertexts
+- Alphabet: A-Z, a-z, 0-9, +, /
+- Padding: = character
+- Line breaks: Not used (single-line encoding)
+
+Base64 URL-Safe Encoding:
+- Used for: Fernet ciphertexts
+- Alphabet: A-Z, a-z, 0-9, -, _ (replaces + and /)
+- Padding: = character
+- Line breaks: Not used
+
+PEM Key Format:
+- Header: -----BEGIN [PUBLIC/PRIVATE] KEY-----
+- Body: Base64 encoded DER key
+- Footer: -----END [PUBLIC/PRIVATE] KEY-----
+- Additional encoding: Entire PEM is Base64 encoded again for JSON
+
+3.6 POST-QUANTUM CRYPTOGRAPHY UPGRADE PATH
+-------------------------------------------
+
+Current Implementation (Classical):
+- KEM: RSA-2048 with OAEP
+- Signature: ECDSA P-256
+- Security: Vulnerable to quantum attacks
+
+Future Implementation (Post-Quantum):
+- KEM: Kyber512 (NIST PQC Round 3 finalist)
+- Signature: Dilithium2 (NIST PQC Round 3 finalist)
+- Security: Quantum-resistant
+
+Kyber512 Specifications:
+- Type: Module-LWE based KEM
+- Public Key: 800 bytes
+- Secret Key: 1632 bytes
+- Ciphertext: 768 bytes
+- Shared Secret: 32 bytes
+- Security Level: NIST Level 1 (equivalent to AES-128)
+
+Dilithium2 Specifications:
+- Type: Module-LWR based signature
+- Public Key: 1312 bytes
+- Secret Key: 2528 bytes
+- Signature: ~2420 bytes (variable)
+- Security Level: NIST Level 2 (equivalent to SHA3-256)
+
+Migration Strategy:
+1. Install liboqs-python library
+2. Replace generate_keys() function
+3. Replace encapsulate_key() and decapsulate_key()
+4. Replace sign_data() and verify_signature()
+5. Update storage for larger key sizes
+6. Maintain API compatibility
+
+
+4. API SPECIFICATIONS
+================================================================================
+
+4.1 REST API OVERVIEW
+---------------------
+
+Protocol: HTTP/1.1
+Data Format: JSON
+Character Encoding: UTF-8
+Base URL: http://localhost:5000 (development)
+CORS: Enabled for all origins (development only)
+
+4.2 COMMON RESPONSE FORMATS
+----------------------------
+
+Success Response:
+{
+  "success": true,
+  "message": "Human-readable success message",
+  "data": { ... }  // Optional payload
+}
+
+Error Response:
+{
+  "success": false,
+  "error": "Human-readable error message"
+}
+
+HTTP Status Codes:
+- 200 OK: Successful operation
+- 400 Bad Request: Invalid input or business logic error
+- 404 Not Found: Resource not found
+- 500 Internal Server Error: Unexpected server error
+
+4.3 ENDPOINT: POST /generate_keys
+----------------------------------
+
+Description: Generates new RSA and ECDSA key pairs
+
+HTTP Method: POST
+URL: /generate_keys
+Authentication: None (future: JWT required)
+Rate Limit: None (future: 10 requests per hour)
+
+Request Headers:
+Content-Type: application/json (optional, no body)
+
+Request Body: None
+
+Response (Success - 200 OK):
+{
+  "success": true,
+  "message": "PQC Keys generated and saved!"
+}
+
+Response (Error - 500):
+{
+  "success": false,
+  "error": "Failed to generate keys: [error details]"
+}
+
+Side Effects:
+- Creates/overwrites data/keys/user_keys.json
+- Invalidates all existing capsules if keys are regenerated
+
+Example Request:
+POST http://localhost:5000/generate_keys
+Content-Type: application/json
+
+Example Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "success": true,
+  "message": "PQC Keys generated and saved!"
+}
+
+4.4 ENDPOINT: POST /create_capsule
+-----------------------------------
+
+Description: Creates encrypted time capsule
+
+HTTP Method: POST
+URL: /create_capsule
+Authentication: None (future: JWT required)
+
+Request Headers:
+Content-Type: application/json
+
+Request Body:
+{
+  "message": string,      // Required, 1-10000 characters
+  "unlock_date": string   // Required, format: YYYY-MM-DD
+}
+
+Field Validation:
+- message: Non-empty string, max 10000 characters
+- unlock_date: Valid ISO date format (YYYY-MM-DD)
+
+Response (Success - 200 OK):
+{
+  "success": true,
+  "message": "Capsule created successfully (unlock date: YYYY-MM-DD)",
+  "capsule": {
+    "timestamp": string,      // ISO format with hyphens
+    "unlock_date": string,    // YYYY-MM-DD
+    "ciphertext": string,     // Base64 encoded
+    "kem_ct": string,         // Base64 encoded
+    "signature": string       // Base64 encoded
+  }
+}
+
+Response (Error - 400):
+{
+  "success": false,
+  "error": "Message cannot be empty." | 
+           "Invalid date format. Use YYYY-MM-DD." |
+           "No keys found. Please generate keys first."
+}
+
+Response (Error - 500):
+{
+  "success": false,
+  "error": "Internal server error: [details]"
+}
+
+Side Effects:
+- Creates new file in data/capsules/
+- Filename: capsule_<timestamp>.json
+
+Example Request:
+POST http://localhost:5000/create_capsule
+Content-Type: application/json
+
+{
+  "message": "Hello, future world!",
+  "unlock_date": "2030-01-01"
+}
+
+Example Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "success": true,
+  "message": "Capsule created successfully (unlock date: 2030-01-01)",
+  "capsule": {
+    "timestamp": "2025-11-27T10-04-07.066163",
+    "unlock_date": "2030-01-01",
+    "ciphertext": "Z0FBQUFBQnBKOVNfOHJjO...",
+    "kem_ct": "17szpXZJO+CRlcHEFCPBp...",
+    "signature": "MEYCIQCj/b20AQ4rq36..."
+  }
+}
+
+4.5 ENDPOINT: GET /capsules
+----------------------------
+
+Description: Lists all capsules with status
+
+HTTP Method: GET
+URL: /capsules
+Authentication: None (future: JWT required)
+
+Request Headers: None required
+
+Request Body: None
+
+Response (Success - 200 OK):
+{
+  "success": true,
+  "capsules": [
+    {
+      "timestamp": string,      // ISO format
+      "unlock_date": string,    // YYYY-MM-DD
+      "status": string          // "locked" | "unlocked"
+    }
+  ]
+}
+
+Response (Error - 500):
+{
+  "success": false,
+  "error": "Failed to list capsules: [details]"
+}
+
+Status Determination:
+- "locked": Current date < unlock_date
+- "unlocked": Current date >= unlock_date
+
+Example Request:
+GET http://localhost:5000/capsules
+
+Example Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "success": true,
+  "capsules": [
+    {
+      "timestamp": "2025-11-27T10-04-07.066163",
+      "unlock_date": "2025-11-27",
+      "status": "unlocked"
+    },
+    {
+      "timestamp": "2025-11-27T10-08-05.309034",
+      "unlock_date": "2030-01-01",
+      "status": "locked"
+    }
+  ]
+}
+
+4.6 ENDPOINT: POST /decrypt_capsule
+------------------------------------
+
+Description: Decrypts capsule if unlocked
+
+HTTP Method: POST
+URL: /decrypt_capsule
+Authentication: None (future: JWT required)
+
+Request Headers:
+Content-Type: application/json
+
+Request Body:
+{
+  "capsule_index": integer  // Required, 0-based index
+}
+
+Field Validation:
+- capsule_index: Non-negative integer
+- Index must be within bounds of capsule list
+
+Response (Success - 200 OK):
+{
+  "success": true,
+  "message": "✅ Decryption Successful!",
+  "decrypted_message": string,
+  "signature_verified": true,
+  "timestamp": string,
+  "unlock_date": string
+}
+
+Response (Error - 400):
+{
+  "success": false,
+  "error": "Invalid capsule index." |
+           "Capsule index out of range." |
+           "Capsule or keys not found." |
+           "Capsule locked until YYYY-MM-DD" |
+           "Signature verification failed! Capsule may be tampered."
+}
+
+Response (Error - 500):
+{
+  "success": false,
+  "error": "Decryption failed: [details]"
+}
+
+Business Logic:
+1. Validate capsule_index
+2. Load capsule by index
+3. Check unlock date
+4. Verify signature
+5. Decrypt message
+6. Return plaintext
+
+Example Request:
+POST http://localhost:5000/decrypt_capsule
+Content-Type: application/json
+
+{
+  "capsule_index": 0
+}
+
+Example Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "success": true,
+  "message": "✅ Decryption Successful!",
+  "decrypted_message": "Hello, future world!",
+  "signature_verified": true,
+  "timestamp": "2025-11-27T10-04-07.066163",
+  "unlock_date": "2025-11-27"
+}
+
+4.7 ENDPOINT: POST /verify_capsule
+-----------------------------------
+
+Description: Verifies capsule signature
+
+HTTP Method: POST
+URL: /verify_capsule
+Authentication: None (future: JWT required)
+
+Request Headers:
+Content-Type: application/json
+
+Request Body:
+{
+  "capsule_index": integer  // Required, 0-based index
+}
+
+Response (Success - 200 OK):
+{
+  "success": true,
+  "verified": boolean,
+  "message": string,
+  "timestamp": string,
+  "unlock_date": string
+}
+
+Response (Error - 400/500):
+{
+  "success": false,
+  "error": string
+}
+
+Example Request:
+POST http://localhost:5000/verify_capsule
+Content-Type: application/json
+
+{
+  "capsule_index": 0
+}
+
+Example Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "success": true,
+  "verified": true,
+  "message": "✅ Signature verified - Capsule is authentic!",
+  "timestamp": "2025-11-27T10-04-07.066163",
+  "unlock_date": "2025-11-27"
+}
+
+
+5. DATABASE SCHEMA
+================================================================================
+
+5.1 FILE-BASED STORAGE
+-----------------------
+
+Storage Type: JSON files
+Location: data/ directory
+Encoding: UTF-8
+Format: Pretty-printed JSON (2-space indent)
+
+5.2 KEYS SCHEMA (user_keys.json)
+---------------------------------
+
+File Path: data/keys/user_keys.json
+
+JSON Structure:
+{
+  "kem_public": string,    // Base64(PEM(RSA public key))
+  "kem_secret": string,    // Base64(PEM(RSA private key))
+  "sig_public": string,    // Base64(PEM(ECDSA public key))
+  "sig_secret": string     // Base64(PEM(ECDSA private key))
+}
+
+Field Specifications:
+- kem_public: ~392 characters (Base64 of ~294 byte PEM)
+- kem_secret: ~1740 characters (Base64 of ~1305 byte PEM)
+- sig_public: ~180 characters (Base64 of ~135 byte PEM)
+- sig_secret: ~228 characters (Base64 of ~171 byte PEM)
+
+Total File Size: ~2.5 KB
+
+Access Pattern: Read on every operation, write once per key generation
+
+5.3 CAPSULE SCHEMA (capsule_<timestamp>.json)
+----------------------------------------------
+
+File Path: data/capsules/capsule_<timestamp>.json
+Naming Convention: capsule_YYYY-MM-DDTHH-MM-SS.ffffff.json
+
+JSON Structure:
+{
+  "timestamp": string,      // ISO format with hyphens for colons
+  "unlock_date": string,    // YYYY-MM-DD format
+  "ciphertext": string,     // Base64 URL-safe (Fernet)
+  "kem_ct": string,         // Base64 standard (RSA ciphertext)
+  "signature": string       // Base64 standard (ECDSA signature)
+}
+
+Field Specifications:
+- timestamp: 26 characters (YYYY-MM-DDTHH-MM-SS.ffffff)
+- unlock_date: 10 characters (YYYY-MM-DD)
+- ciphertext: Variable, ~1.33x message length
+- kem_ct: 344 characters (256 bytes Base64)
+- signature: 88-96 characters (64-72 bytes Base64)
+
+Typical File Size: 500 bytes + message length
+
+Access Pattern: 
+- Write once on creation
+- Read multiple times for listing/decryption/verification
+- Never modified after creation
+
+5.4 INDEXING
+------------
+
+Current: Linear scan of directory
+Method: os.listdir() and filename parsing
+
+Future Optimization:
+- SQLite index database
+- In-memory cache for frequently accessed capsules
+- B-tree index on timestamp and unlock_date
+
+
+6. FILE SYSTEM ORGANIZATION
+================================================================================
+
+6.1 DIRECTORY STRUCTURE
+------------------------
+
+Root: d:\Cryptography\quantum_time_capsule\
+
+Directory Tree:
+quantum_time_capsule/
+├── Python Source Files (*.py)
+├── Configuration Files (*.txt, *.md, *.json, *.csv)
+├── __pycache__/ [Generated, Git-ignored]
+│   └── Python bytecode files
+├── .venv/ [Optional, Git-ignored]
+│   └── Virtual environment
+├── data/ [Persistent data]
+│   ├── keys/ [Cryptographic keys]
+│   │   ├── .gitkeep
+│   │   └── user_keys.json [Git-ignored]
+│   └── capsules/ [Encrypted capsules]
+│       ├── .gitkeep
+│       └── capsule_*.json [Git-ignored]
+├── backup/ [Capsule backups]
+│   ├── .gitkeep
+│   └── backup_*.zip [Git-ignored]
+├── qr_capsules/ [QR code images]
+│   ├── .gitkeep
+│   └── capsule_*_qr.png [Git-ignored]
+└── frontend/ [React application]
+    ├── node_modules/ [Dependencies, Git-ignored]
+    ├── build/ [Production build, Git-ignored]
+    ├── public/ [Static assets]
+    │   ├── index.html
+    │   ├── manifest.json
+    │   └── robots.txt
+    ├── src/ [Source code]
+    │   ├── App.tsx
+    │   ├── App.css
+    │   ├── index.tsx
+    │   ├── index.css
+    │   └── ...
+    ├── package.json
+    ├── package-lock.json
+    ├── tsconfig.json
+    ├── tailwind.config.js
+    └── postcss.config.js
+
+6.2 FILE PERMISSIONS
+--------------------
+
+Recommended Permissions (Linux/macOS):
+- Python files: 644 (rw-r--r--)
+- Data directory: 700 (rwx------)
+- Keys file: 600 (rw-------)
+- Capsule files: 644 (rw-r--r--)
+
+Windows: Use NTFS permissions to restrict access to data/ folder
+
+6.3 BACKUP STRATEGY
+-------------------
+
+Backup Files: backup/backup_capsule_<timestamp>_<date>.zip
+
+Contents:
+- Capsule JSON file
+- Associated QR code (if exists)
+- Metadata file
+
+Backup Frequency: Manual (future: automated daily)
+
+Retention: Indefinite (future: configurable)
+
+
+7. SECURITY ARCHITECTURE
+================================================================================
+
+7.1 THREAT MODEL
+----------------
+
+Assumed Adversaries:
+1. Network Attacker: Can intercept/modify network traffic
+2. Classical Computer: Unlimited classical computing power
+3. Quantum Computer: Limited qubit quantum computer (future threat)
+
+Protected Assets:
+- Cryptographic keys (confidentiality, integrity)
+- Capsule contents (confidentiality, integrity)
+- Unlock date (integrity)
+
+Attack Vectors:
+- Key theft from storage
+- Network eavesdropping
+- Man-in-the-middle attacks
+- Signature forgery
+- Time-lock bypass
+- Quantum cryptanalysis (future)
+
+7.2 SECURITY CONTROLS
+----------------------
+
+Confidentiality:
+✓ Keys stored on local filesystem
+✓ Messages encrypted with AES-128
+✓ AES keys encrypted with RSA-2048
+✗ Keys not encrypted at rest (improvement needed)
+✗ No network encryption (HTTPS needed for production)
+
+Integrity:
+✓ Digital signatures on all capsules
+✓ HMAC in Fernet prevents ciphertext tampering
+✓ Signature verification before decryption
+✗ No file integrity monitoring
+
+Availability:
+✓ File-based storage (simple recovery)
+✓ Backup functionality available
+✗ No replication or redundancy
+✗ No disaster recovery automation
+
+Authentication:
+✗ No user authentication (development only)
+✗ No API authentication
+Future: JWT tokens, OAuth 2.0
+
+Authorization:
+✗ No access control (development only)
+Future: Role-based access control (RBAC)
+
+7.3 SECURE CODING PRACTICES
+----------------------------
+
+Input Validation:
+- All user inputs validated before processing
+- Date format validation with fromisoformat()
+- Type checking on API parameters
+- Bounds checking on capsule indices
+
+Output Encoding:
+- Base64 encoding for binary data
+- JSON escaping for text outputs
+- HTML escaping in frontend (React automatic)
+
+Error Handling:
+- Try-catch blocks on all operations
+- Generic error messages to users
+- Detailed errors logged (not exposed)
+- No stack traces in production
+
+Cryptographic Best Practices:
+- Use strong random number generation (os.urandom)
+- Never implement custom crypto algorithms
+- Use established libraries (cryptography.io)
+- Regular security updates
+
+
+8. PERFORMANCE SPECIFICATIONS
+================================================================================
+
+8.1 MEASURED PERFORMANCE
+------------------------
+
+Operation Benchmarks (from benchmark.csv):
+
+Key Generation:
+- PQC Keys (RSA+ECDSA): 161 ms
+- RSA Only: 52 ms
+- ECDSA Only: ~109 ms (calculated)
+
+Encryption/Decryption:
+- KEM Encapsulation: 0.9 ms
+- KEM Decapsulation: 52.5 ms
+- AES Encryption: 0.95 ms
+- AES Decryption: 0.09 ms
+
+Signature Operations:
+- Sign (ECDSA): 48.6 ms
+- Verify (ECDSA): 0.13 ms
+
+Total Capsule Operations:
+- Create Capsule: ~150 ms (encap + encrypt + sign)
+- Decrypt Capsule: ~55 ms (decap + decrypt + verify)
+
+8.2 SCALABILITY LIMITS
+-----------------------
+
+Current Implementation:
+- Maximum Capsules: Limited by filesystem (~10,000 practical)
+- Capsule Size: Limited by memory (~10 MB per capsule)
+- Concurrent Users: 1 (no authentication)
+- API Throughput: ~100 requests/sec (single-threaded Flask)
+
+Performance Bottlenecks:
+1. RSA decryption (52ms per operation)
+2. Directory scanning for capsule list
+3. JSON parsing on every access
+4. Synchronous file I/O
+
+8.3 OPTIMIZATION STRATEGIES
+----------------------------
+
+Short-term (< 1 week):
+- Cache key data in memory
+- Use SQLite index for capsules
+- Implement pagination for capsule list
+
+Medium-term (1-4 weeks):
+- Multi-threading for Flask (Gunicorn)
+- Async I/O for file operations
+- Connection pooling
+
+Long-term (1-3 months):
+- Migrate to database (PostgreSQL)
+- Implement caching layer (Redis)
+- Horizontal scaling with load balancer
+
+
+9. ERROR HANDLING
+================================================================================
+
+9.1 ERROR CATEGORIES
+--------------------
+
+1. User Errors (400 Bad Request)
+   - Invalid input format
+   - Business rule violation (e.g., locked capsule)
+   - Resource not found
+
+2. System Errors (500 Internal Server Error)
+   - Cryptographic operation failure
+   - File system error
+   - Unexpected exceptions
+
+3. Security Errors (400 Bad Request)
+   - Signature verification failure
+   - Tampered data detected
+
+9.2 ERROR RESPONSE FORMAT
+--------------------------
+
+Standard Error Response:
+{
+  "success": false,
+  "error": "Human-readable error message"
+}
+
+Error Messages:
+- User-friendly
+- No sensitive information
+- Actionable guidance when possible
+
+9.3 ERROR LOGGING
+------------------
+
+Current: Console output (print statements)
+
+Production Requirements:
+- Structured logging (JSON format)
+- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Log rotation and archival
+- Centralized log collection (ELK stack)
+
+9.4 EXCEPTION HANDLING PATTERN
+-------------------------------
+
+Python Pattern:
+```python
+try:
+    # Operation
+    result = perform_operation()
+    return {"success": True, "data": result}
+except SpecificException as e:
+    # Handle specific error
+    return {"success": False, "error": str(e)}, 400
+except Exception as e:
+    # Catch-all for unexpected errors
+    log_error(e)  # Detailed logging
+    return {"success": False, "error": "Internal error"}, 500
+```
+
+React Pattern:
+```typescript
+try {
+  const response = await axios.post(url, data);
+  if (response.data.success) {
+    handleSuccess(response.data);
+  } else {
+    handleError(response.data.error);
+  }
+} catch (error) {
+  if (error.response) {
+    handleError(error.response.data.error);
+  } else {
+    handleError("Network error");
+  }
+}
+```
+
+
+10. TESTING REQUIREMENTS
+================================================================================
+
+10.1 UNIT TESTING
+-----------------
+
+Test Coverage Goals:
+- Code Coverage: 80% minimum
+- Function Coverage: 90% minimum
+- Branch Coverage: 75% minimum
+
+Test Frameworks:
+- Python: pytest
+- JavaScript: Jest, React Testing Library
+
+Test Structure:
+tests/
+├── unit/
+│   ├── test_pqc_module.py
+│   ├── test_aes_module.py
+│   ├── test_storage_module.py
+│   └── test_utils.py
+├── integration/
+│   ├── test_api.py
+│   └── test_workflows.py
+└── e2e/
+    └── test_frontend.py
+
+10.2 TEST CASES
+---------------
+
+PQC Module Tests:
+- test_generate_keys_success
+- test_encapsulate_decapsulate_roundtrip
+- test_sign_verify_success
+- test_verify_invalid_signature
+- test_key_serialization
+
+AES Module Tests:
+- test_encrypt_decrypt_roundtrip
+- test_decrypt_wrong_key_fails
+- test_empty_message_handling
+- test_large_message_handling
+
+Storage Module Tests:
+- test_save_load_keys
+- test_save_load_capsule
+- test_list_capsules_empty
+- test_list_capsules_multiple
+
+API Tests:
+- test_generate_keys_endpoint
+- test_create_capsule_success
+- test_create_capsule_invalid_date
+- test_decrypt_locked_capsule
+- test_decrypt_unlocked_capsule
+
+10.3 INTEGRATION TESTING
+-------------------------
+
+Test Scenarios:
+1. Full capsule lifecycle:
+   Generate keys → Create capsule → List → Decrypt → Verify
+2. Multiple users (future)
+3. Concurrent operations
+4. Error recovery
+
+10.4 PERFORMANCE TESTING
+------------------------
+
+Metrics to Test:
+- API response time (p50, p95, p99)
+- Throughput (requests per second)
+- Memory usage under load
+- File system performance
+
+Tools:
+- Apache JMeter for load testing
+- Locust for distributed testing
+- cProfile for Python profiling
+
+
+11. DEPLOYMENT ARCHITECTURE
+================================================================================
+
+11.1 DEVELOPMENT ENVIRONMENT
+----------------------------
+
+Current Setup:
+- Local development server
+- Flask debug mode enabled
+- React development server (port 3000)
+- No authentication
+- No HTTPS
+
+Components:
+- Backend: python api.py
+- Frontend: npm start
+- Database: File system
+
+11.2 PRODUCTION ARCHITECTURE
+-----------------------------
+
+Recommended Setup:
+
+┌─────────────────────────────────────────┐
+│         Load Balancer (Nginx)           │
+│         SSL Termination                 │
+└─────────────────────────────────────────┘
+                    │
+        ┌───────────┴───────────┐
+        ▼                       ▼
+┌───────────────┐       ┌───────────────┐
+│  Web Server   │       │  Web Server   │
+│  (Gunicorn)   │       │  (Gunicorn)   │
+│  Flask API    │       │  Flask API    │
+└───────────────┘       └───────────────┘
+        │                       │
+        └───────────┬───────────┘
+                    ▼
+        ┌─────────────────────┐
+        │   PostgreSQL DB     │
+        │   (or MongoDB)      │
+        └─────────────────────┘
+                    │
+        ┌─────────────────────┐
+        │   Redis Cache       │
+        │   (optional)        │
+        └─────────────────────┘
+
+Components:
+- Reverse Proxy: Nginx with SSL
+- WSGI Server: Gunicorn with 4-8 workers
+- Application: Flask API
+- Database: PostgreSQL or MongoDB
+- Cache: Redis (optional)
+- Static Files: Served by Nginx
+- Frontend: Built React app (npm run build)
+
+11.3 CONTAINERIZATION (DOCKER)
+-------------------------------
+
+Dockerfile (Backend):
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "api:app"]
+```
+
+Dockerfile (Frontend):
+```dockerfile
+FROM node:18-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Docker Compose:
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+```
+
+11.4 CLOUD DEPLOYMENT OPTIONS
+------------------------------
+
+AWS:
+- Compute: EC2 or ECS (Fargate)
+- Database: RDS (PostgreSQL) or DynamoDB
+- Storage: S3 for backups
+- Load Balancer: ALB
+- CDN: CloudFront
+
+Azure:
+- Compute: App Service or Container Instances
+- Database: Azure Database for PostgreSQL
+- Storage: Blob Storage
+- Load Balancer: Azure Load Balancer
+- CDN: Azure CDN
+
+Google Cloud:
+- Compute: Cloud Run or GKE
+- Database: Cloud SQL (PostgreSQL)
+- Storage: Cloud Storage
+- Load Balancer: Cloud Load Balancing
+- CDN: Cloud CDN
+
+
+12. CODE STANDARDS
+================================================================================
+
+12.1 PYTHON CODE STYLE
+-----------------------
+
+Style Guide: PEP 8
+Line Length: 88 characters (Black formatter default)
+Indentation: 4 spaces
+Quotes: Double quotes for docstrings, single quotes for strings
+
+Docstring Format (Google Style):
+```python
+def function_name(param1: type, param2: type) -> return_type:
+    """Short description.
+    
+    Longer description if needed.
+    
+    Args:
+        param1: Description of param1
+        param2: Description of param2
+        
+    Returns:
+        Description of return value
+        
+    Raises:
+        ExceptionType: When this exception is raised
+    """
+```
+
+Type Hints: Required for all function signatures
+
+Naming Conventions:
+- Functions: snake_case
+- Classes: PascalCase
+- Constants: UPPER_SNAKE_CASE
+- Private: _leading_underscore
+
+12.2 JAVASCRIPT/TYPESCRIPT CODE STYLE
+--------------------------------------
+
+Style Guide: Airbnb JavaScript Style Guide
+Line Length: 100 characters
+Indentation: 2 spaces
+Quotes: Single quotes
+
+Type Annotations: Required for TypeScript
+
+Naming Conventions:
+- Functions: camelCase
+- Components: PascalCase
+- Constants: UPPER_SNAKE_CASE
+- Private: #privateField (ES2022)
+
+12.3 GIT WORKFLOW
+-----------------
+
+Branch Strategy: Git Flow
+- main: Production-ready code
+- develop: Integration branch
+- feature/*: New features
+- bugfix/*: Bug fixes
+- hotfix/*: Production hotfixes
+
+Commit Message Format:
+```
+type(scope): Short description
+
+Longer description if needed
+
+Fixes #123
+```
+
+Types: feat, fix, docs, style, refactor, test, chore
+
+12.4 CODE REVIEW CHECKLIST
+---------------------------
+
+Functionality:
+☐ Code works as intended
+☐ All test cases pass
+☐ Error handling is appropriate
+☐ Edge cases are handled
+
+Security:
+☐ No hardcoded secrets
+☐ Input validation present
+☐ No SQL injection vulnerabilities
+☐ No XSS vulnerabilities
+
+Performance:
+☐ No unnecessary loops
+☐ Efficient algorithms used
+☐ No memory leaks
+
+Maintainability:
+☐ Code is readable
+☐ Comments explain why, not what
+☐ Functions are small and focused
+☐ DRY principle followed
+
+Documentation:
+☐ Docstrings present
+☐ README updated if needed
+☐ API docs updated if needed
+
+
+================================================================================
+                    END OF TECHNICAL SPECIFICATIONS
+================================================================================

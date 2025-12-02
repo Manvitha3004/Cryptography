@@ -1,0 +1,1005 @@
+================================================================================
+                    QUANTUM-SAFE DIGITAL TIME CAPSULE
+                          USER GUIDE & MANUAL
+================================================================================
+
+DOCUMENT INFORMATION
+================================================================================
+Document: User Guide
+Version: 1.0
+Date: November 27, 2025
+Audience: End users, administrators
+Purpose: Step-by-step guide for using the application
+
+
+TABLE OF CONTENTS
+================================================================================
+1. Introduction
+2. Getting Started
+3. Web Interface Guide
+4. Command-Line Interface Guide
+5. Desktop GUI Guide
+6. Common Tasks
+7. Tips and Best Practices
+8. Troubleshooting
+9. FAQ
+10. Glossary
+
+
+1. INTRODUCTION
+================================================================================
+
+1.1 WHAT IS QUANTUM-SAFE DIGITAL TIME CAPSULE?
+-----------------------------------------------
+
+Quantum-Safe Digital Time Capsule is a secure messaging application that lets
+you create encrypted messages that can only be opened after a specific date.
+Think of it as a digital time capsule - you lock a message today, and it stays
+locked until the unlock date you choose.
+
+Key Features:
+• Create encrypted time capsules with custom unlock dates
+• Military-grade encryption protects your messages
+• Digital signatures ensure message authenticity
+• Multiple interfaces: web, command-line, and desktop
+• Works offline - all data stored locally
+• No cloud storage - complete privacy
+
+1.2 WHO IS THIS FOR?
+--------------------
+
+Perfect for:
+• Personal time capsules (letters to your future self)
+• Business time-locks (scheduled information release)
+• Legal documents with delayed disclosure
+• Educational demonstrations of cryptography
+• Anyone interested in secure messaging
+
+1.3 HOW IT WORKS
+----------------
+
+Simple 4-step process:
+
+Step 1: Generate Keys
+       Create your unique cryptographic keys (one-time setup)
+
+Step 2: Write Message
+       Type the message you want to lock in the time capsule
+
+Step 3: Set Unlock Date
+       Choose when the message should become available
+
+Step 4: Decrypt Later
+       After the unlock date, decrypt and read your message
+
+Behind the scenes:
+- Your message is encrypted with advanced encryption
+- The encryption key is locked with post-quantum cryptography
+- A digital signature proves the message hasn't been tampered with
+- Time-lock prevents decryption before the unlock date
+
+
+2. GETTING STARTED
+================================================================================
+
+2.1 SYSTEM REQUIREMENTS
+-----------------------
+
+Minimum Requirements:
+• Computer with Windows 10/11, macOS 11+, or Linux
+• 2 GB RAM
+• 100 MB free disk space
+• Internet connection (for web interface setup only)
+• Modern web browser (Chrome, Firefox, Safari, or Edge)
+
+Recommended:
+• 4 GB RAM or more
+• 1 GB free disk space
+• Broadband internet connection
+
+2.2 INSTALLATION
+----------------
+
+The application is already installed at:
+d:\Cryptography\quantum_time_capsule\
+
+No additional installation needed! Skip to Section 2.3.
+
+2.3 STARTING THE APPLICATION
+-----------------------------
+
+OPTION A: Web Interface (Recommended)
+
+1. Open Command Prompt or PowerShell
+   
+2. Start the backend server:
+   cd d:\Cryptography\quantum_time_capsule
+   python api.py
+   
+   You should see:
+   * Running on http://0.0.0.0:5000
+   
+3. Open a NEW Command Prompt window
+
+4. Start the frontend:
+   cd d:\Cryptography\quantum_time_capsule\frontend
+   npm start
+   
+   Your web browser will automatically open to:
+   http://localhost:3000
+
+5. You're ready to use the application!
+
+OPTION B: Desktop GUI
+
+1. Open Command Prompt or PowerShell
+
+2. Navigate to the project folder:
+   cd d:\Cryptography\quantum_time_capsule
+
+3. Run the GUI:
+   python gui_main.py
+
+4. A window will open with the application
+
+OPTION C: Command-Line Interface
+
+1. Open Command Prompt or PowerShell
+
+2. Navigate to the project folder:
+   cd d:\Cryptography\quantum_time_capsule
+
+3. Run the CLI:
+   python capsule_main.py
+
+4. Follow the on-screen menu
+
+2.4 FIRST-TIME SETUP
+--------------------
+
+Before creating your first capsule, you MUST generate cryptographic keys:
+
+1. Start the application (any interface)
+
+2. Click/Select "Generate Keys"
+
+3. Wait 2-3 seconds for key generation
+
+4. You'll see a success message
+
+5. Your keys are now saved securely
+
+⚠️ IMPORTANT: Without keys, you cannot create or decrypt capsules!
+
+
+3. WEB INTERFACE GUIDE
+================================================================================
+
+3.1 INTERFACE OVERVIEW
+----------------------
+
+The web interface has three main areas:
+
+┌─────────────────────────────────────────────────────────┐
+│  HEADER BAR (Blue gradient at top)                     │
+│  • Project title                                        │
+│  • Current date and time                                │
+└─────────────────────────────────────────────────────────┘
+┌─────────────┬───────────────────────────────────────────┐
+│  SIDEBAR    │  TERMINAL OUTPUT                          │
+│  (Left)     │  (Main area - right)                      │
+│             │                                            │
+│  Buttons    │  Shows results of operations              │
+│  for all    │  Green text on black background           │
+│  operations │  Looks like a computer terminal           │
+│             │                                            │
+│             │                                            │
+└─────────────┴───────────────────────────────────────────┘
+
+3.2 SIDEBAR CONTROLS
+--------------------
+
+KEY MANAGEMENT SECTION:
+┌──────────────────────┐
+│   Generate Keys      │  ← Click this first (one-time setup)
+└──────────────────────┘
+
+CREATE CAPSULE SECTION:
+┌──────────────────────┐
+│   New Capsule        │  ← Click to create a time capsule
+└──────────────────────┘
+
+VIEW CAPSULES SECTION:
+┌──────────────────────┐
+│   List All           │  ← View all your capsules
+└──────────────────────┘
+
+OPERATIONS SECTION:
+┌──────────────────────┐
+│   Capsule #: [    ]  │  ← Enter capsule number here
+├──────────────────────┤
+│   Decrypt            │  ← Decrypt a capsule (if unlocked)
+├──────────────────────┤
+│   Verify             │  ← Check capsule authenticity
+└──────────────────────┘
+
+UTILITY:
+┌──────────────────────┐
+│   Clear              │  ← Clear the terminal output
+└──────────────────────┘
+
+3.3 CREATING YOUR FIRST CAPSULE
+--------------------------------
+
+Step-by-Step Instructions:
+
+1. Generate Keys (First Time Only)
+   • Click the "Generate Keys" button
+   • Wait for confirmation: "✓ Keys generated successfully"
+   • This creates your unique cryptographic keys
+
+2. Create a New Capsule
+   • Click the "New Capsule" button
+   • A dialog window will appear
+
+3. Fill in the Capsule Form
+   
+   Message Field:
+   • Type your message here
+   • Can be any length (up to 10,000 characters)
+   • Example: "Dear future me, I hope you're doing well!"
+   
+   Unlock Date Field:
+   • Click the date picker
+   • Choose a date in the future
+   • Example: December 31, 2025
+   • The capsule will be locked until this date
+
+4. Create the Capsule
+   • Click the "Create" button
+   • Or click "Cancel" to abort
+
+5. Confirmation
+   • You'll see: "✓ Capsule created successfully"
+   • The capsule is now encrypted and saved
+   • Message: (first 50 characters of your message)
+   • Unlock: (your chosen date)
+
+3.4 VIEWING YOUR CAPSULES
+--------------------------
+
+To see all your time capsules:
+
+1. Click the "List All" button
+
+2. The terminal will show:
+   ✓ Found X capsule(s)
+   [1] 2025-11-27T10-04-07.066163 - Unlock: 2025-12-31 🔒 LOCKED
+   [2] 2025-11-27T10-08-05.309034 - Unlock: 2025-11-27 🔓 UNLOCKED
+
+Understanding the List:
+• [Number] - Capsule number (use this for decrypt/verify)
+• Timestamp - When the capsule was created
+• Unlock date - When it becomes available
+• 🔒 LOCKED - Cannot be decrypted yet
+• 🔓 UNLOCKED - Ready to decrypt
+
+3.5 DECRYPTING A CAPSULE
+-------------------------
+
+To decrypt an unlocked capsule:
+
+1. List your capsules to see which are unlocked
+
+2. Note the capsule number (e.g., "1")
+
+3. Type the number in the "Capsule #" field
+
+4. Click the "Decrypt" button
+
+5. If successful, you'll see:
+   ✓ Decryption successful
+   Message: "Your original message"
+   Timestamp: (when it was created)
+   Unlock Date: (the unlock date)
+   Signature: ✓ Verified
+
+⚠️ LOCKED CAPSULES:
+If you try to decrypt a locked capsule, you'll see:
+✗ Decryption failed: Capsule locked until YYYY-MM-DD
+
+Wait until the unlock date to decrypt!
+
+3.6 VERIFYING A CAPSULE
+------------------------
+
+Verification checks if a capsule is authentic (hasn't been tampered with):
+
+1. Type the capsule number in "Capsule #"
+
+2. Click the "Verify" button
+
+3. Results:
+   
+   If Authentic:
+   ✓ Capsule verified successfully
+   Timestamp: (creation time)
+   Unlock Date: (unlock date)
+   Signature: ✓ Valid
+
+   If Tampered:
+   ✗ Verification failed
+   The capsule may have been modified!
+
+💡 TIP: Always verify before decrypting if you suspect tampering.
+
+3.7 CLEARING THE OUTPUT
+------------------------
+
+The terminal output can get long. To clear it:
+
+1. Click the "Clear" button at the bottom of the sidebar
+
+2. The terminal output will be erased
+
+3. Operations will continue to work normally
+
+
+4. COMMAND-LINE INTERFACE GUIDE
+================================================================================
+
+4.1 STARTING THE CLI
+--------------------
+
+1. Open Command Prompt or PowerShell
+
+2. Navigate to project folder:
+   cd d:\Cryptography\quantum_time_capsule
+
+3. Run the program:
+   python capsule_main.py
+
+4. You'll see the main menu:
+
+   ==== Quantum Time Capsule ====
+   1. Generate PQC Keys
+   2. Create Capsule
+   3. View Capsules
+   4. Decrypt Capsule
+   5. Verify Capsule
+   0. Exit
+   
+   Choose option:
+
+4.2 GENERATING KEYS (OPTION 1)
+-------------------------------
+
+1. Type: 1
+2. Press Enter
+3. You'll see:
+   🔑 Generating PQC Keys (Kyber512 + Dilithium2)...
+   ✅ PQC Keys generated and saved!
+4. Keys are now ready to use
+
+4.3 CREATING A CAPSULE (OPTION 2)
+----------------------------------
+
+1. Type: 2
+2. Press Enter
+3. Enter message:
+   Enter message: Hello, future world!
+4. Enter unlock date:
+   Enter unlock date (YYYY-MM-DD): 2030-01-01
+5. Confirmation:
+   🔒 Capsule will be locked until 2030-01-01
+   🔒 Capsule created successfully (unlock date: 2030-01-01)
+
+4.4 VIEWING CAPSULES (OPTION 3)
+--------------------------------
+
+1. Type: 3
+2. Press Enter
+3. You'll see:
+   📦 Available Capsules:
+   1. 2025-11-27T10-04-07.066163 - Unlock: 2030-01-01 (🔒 Locked)
+   2. 2025-11-27T10-08-05.309034 - Unlock: 2025-11-27 (🔓 Unlocked)
+
+4.5 DECRYPTING A CAPSULE (OPTION 4)
+------------------------------------
+
+1. Type: 4
+2. Press Enter
+3. View the capsule list
+4. Enter capsule number:
+   Enter capsule number to decrypt: 2
+5. If unlocked:
+   🔓 Decryption Successful!
+   Message: Hello, future world!
+   ✅ Signature verified (Dilithium2)
+6. If locked:
+   ⏳ Capsule locked until 2030-01-01
+
+4.6 VERIFYING A CAPSULE (OPTION 5)
+-----------------------------------
+
+1. Type: 5
+2. Press Enter
+3. View the capsule list
+4. Enter capsule number:
+   Enter capsule number to verify: 1
+5. Result:
+   ✅ Signature verified - capsule is authentic
+   OR
+   ❌ Signature verification failed - capsule may be tampered
+
+4.7 EXITING THE PROGRAM (OPTION 0)
+-----------------------------------
+
+1. Type: 0
+2. Press Enter
+3. You'll see: Goodbye!
+4. The program closes
+
+
+5. DESKTOP GUI GUIDE
+================================================================================
+
+5.1 GUI OVERVIEW
+----------------
+
+The desktop GUI has:
+• Large text output area (top)
+• Control buttons (bottom)
+• Dialog boxes for input
+
+┌─────────────────────────────────────────────┐
+│  Quantum-Safe Digital Time Capsule          │
+├─────────────────────────────────────────────┤
+│                                             │
+│  [Large Text Output Area]                   │
+│  Shows results of operations                │
+│                                             │
+├─────────────────────────────────────────────┤
+│ [Generate Keys] [Create Capsule]            │
+│ [View Capsules] [Decrypt Capsule]           │
+│ [Verify Capsule] [Clear Output]             │
+│            [Exit]                            │
+└─────────────────────────────────────────────┘
+
+5.2 BUTTON FUNCTIONS
+--------------------
+
+[Generate PQC Keys]
+• Creates your cryptographic keys
+• Click once for initial setup
+• Shows confirmation message
+
+[Create Capsule]
+• Opens dialog to create new capsule
+• Enter message and date
+• Capsule is encrypted and saved
+
+[View Capsules]
+• Lists all your capsules
+• Shows locked/unlocked status
+• Displays timestamps and dates
+
+[Decrypt Capsule]
+• Opens dialog to enter capsule number
+• Decrypts if unlocked
+• Shows original message
+
+[Verify Capsule]
+• Opens dialog to enter capsule number
+• Checks signature authenticity
+• Shows verification result
+
+[Clear Output]
+• Clears the text area
+• Doesn't delete any capsules
+• Just cleans up the display
+
+[Exit]
+• Closes the application
+• All data is saved
+• Safe to exit anytime
+
+5.3 USING THE GUI
+-----------------
+
+Creating a Capsule:
+
+1. Click "Create Capsule"
+
+2. Dialog appears: "Enter message:"
+   • Type your message
+   • Click OK
+
+3. Dialog appears: "Enter unlock date (YYYY-MM-DD):"
+   • Type date, e.g., 2030-01-01
+   • Click OK
+
+4. Confirmation in output area:
+   🔒 Capsule created successfully
+
+Decrypting a Capsule:
+
+1. Click "View Capsules" to see list
+
+2. Note the capsule number
+
+3. Click "Decrypt Capsule"
+
+4. Dialog appears: "Enter capsule number to decrypt (1-X):"
+   • Type the number
+   • Click OK
+
+5. If unlocked, message appears in output area
+
+6. If locked, you'll see lock message
+
+
+6. COMMON TASKS
+================================================================================
+
+6.1 CREATING A PERSONAL TIME CAPSULE
+-------------------------------------
+
+Scenario: You want to write a letter to yourself 5 years from now.
+
+Steps:
+1. Generate keys (if not already done)
+2. Click "New Capsule" (or choose option 2 in CLI)
+3. Write your message:
+   "Dear Future Me, Today is November 27, 2025. I'm starting my journey
+   towards my goals. I hope by 2030, I've achieved what I set out to do."
+4. Set unlock date: 2030-11-27
+5. Create capsule
+6. The capsule is locked until November 27, 2030
+
+6.2 CREATING A BUSINESS TIME-LOCK
+----------------------------------
+
+Scenario: You need to release confidential information on a specific date.
+
+Steps:
+1. Prepare your confidential message
+2. Create capsule with the message
+3. Set unlock date to your release date
+4. Share the encrypted capsule file (it can't be read early)
+5. On release date, decrypt and share the plaintext
+
+6.3 CHECKING CAPSULE AUTHENTICITY
+----------------------------------
+
+Scenario: You want to ensure a capsule hasn't been modified.
+
+Steps:
+1. List all capsules
+2. Choose the capsule number
+3. Click "Verify" (or choose option 5 in CLI)
+4. Check the result:
+   • ✅ Valid - Safe to decrypt
+   • ❌ Invalid - Do NOT trust this capsule
+
+6.4 RECOVERING FROM KEY LOSS
+-----------------------------
+
+⚠️ WARNING: If you lose your keys, you CANNOT decrypt existing capsules!
+
+If keys are deleted:
+1. Old capsules are permanently unrecoverable
+2. You can generate NEW keys
+3. Create new capsules with new keys
+4. Keep backups of your keys!
+
+Best Practice:
+• Back up data/keys/user_keys.json regularly
+• Store backup in secure location (USB drive, encrypted cloud)
+
+6.5 BACKING UP YOUR CAPSULES
+-----------------------------
+
+Manual Backup:
+1. Copy the entire "data" folder
+2. Save to external drive or cloud storage
+3. Include backup/ folder if you use QR codes
+
+Backup Location:
+d:\Cryptography\quantum_time_capsule\data\
+
+What to backup:
+• data/keys/user_keys.json (CRITICAL)
+• data/capsules/ (all your capsules)
+• backup/ (optional, if used)
+
+Restore:
+1. Copy backed-up data folder back
+2. Overwrite existing data folder
+3. Your capsules and keys are restored
+
+
+7. TIPS AND BEST PRACTICES
+================================================================================
+
+7.1 SECURITY TIPS
+-----------------
+
+✓ DO:
+• Generate strong keys (the app does this automatically)
+• Keep your keys secret and backed up
+• Verify capsules before decrypting
+• Use meaningful unlock dates
+• Test with a short-term capsule first
+
+✗ DON'T:
+• Share your user_keys.json file
+• Manually edit capsule JSON files
+• Set unlock dates in the past (for real capsules)
+• Delete the data folder without backup
+• Run multiple instances simultaneously
+
+7.2 DATE SELECTION TIPS
+------------------------
+
+For Personal Capsules:
+• Birthdays (future ones)
+• Anniversaries
+• New Year's Day (start fresh)
+• Significant milestones
+
+For Business:
+• Project deadlines
+• Contract end dates
+• Information embargo lift dates
+• Scheduled releases
+
+Remember:
+• Use YYYY-MM-DD format (e.g., 2030-12-31)
+• The capsule unlocks at midnight on that date
+• You can't change the date after creation
+
+7.3 MESSAGE WRITING TIPS
+-------------------------
+
+Make your message meaningful:
+• Include context (why you're writing this)
+• Date your message
+• Be specific about your hopes/expectations
+• Include enough detail to remember the situation
+• Think about your future self reading it
+
+Example Good Message:
+"Today is November 27, 2025. I'm writing this as I start my new career.
+My goals for the next 5 years are: [list goals]. I hope when I read this
+in 2030, I'll be proud of what I've accomplished. Current situation: [details]"
+
+Example Poor Message:
+"Hello future me."
+(Too vague, no context)
+
+7.4 ORGANIZATION TIPS
+---------------------
+
+Keep Track of Your Capsules:
+• Use meaningful messages (first sentence describes the capsule)
+• Note unlock dates somewhere safe
+• Verify capsules periodically
+• Review the capsule list occasionally
+
+File Organization:
+• Don't manually rename capsule files
+• Don't move files between folders
+• Let the application manage everything
+
+
+8. TROUBLESHOOTING
+================================================================================
+
+8.1 COMMON PROBLEMS AND SOLUTIONS
+----------------------------------
+
+PROBLEM: "No keys found" error
+
+Solution:
+1. Generate keys first
+2. Click "Generate Keys" button
+3. Wait for confirmation
+4. Try your operation again
+
+---
+
+PROBLEM: Cannot decrypt capsule - "Capsule locked"
+
+This is NORMAL behavior, not an error!
+
+Solution:
+1. Check the unlock date
+2. Wait until that date passes
+3. For testing, create a new capsule with today's date
+
+---
+
+PROBLEM: Web interface won't open
+
+Solutions:
+1. Check if backend is running (python api.py)
+2. Check if port 5000 is available
+3. Check if frontend is running (npm start)
+4. Try closing and restarting both servers
+5. Clear browser cache
+
+---
+
+PROBLEM: "Signature verification failed"
+
+This means the capsule was modified!
+
+Solutions:
+1. Don't manually edit capsule JSON files
+2. Restore from backup if available
+3. The capsule is likely corrupted - don't trust it
+
+---
+
+PROBLEM: GUI window doesn't open
+
+Solutions:
+1. Check if Python is installed: python --version
+2. Check if tkinter is installed (should be included)
+3. Try CLI instead: python capsule_main.py
+4. Reinstall Python with GUI support
+
+---
+
+PROBLEM: Capsule list is empty
+
+Solutions:
+1. Create a capsule first (option 2)
+2. Check if data/capsules/ folder exists
+3. Check if you're in the right directory
+
+---
+
+PROBLEM: Application is slow
+
+Solutions:
+1. Check disk space (needs 100 MB minimum)
+2. Close other applications
+3. Reduce number of capsules (archive old ones)
+4. Restart the application
+
+8.2 ERROR MESSAGES EXPLAINED
+-----------------------------
+
+"Message cannot be empty"
+→ You must type a message in the capsule
+
+"Invalid date format. Use YYYY-MM-DD"
+→ Date must be like: 2030-12-31
+
+"Capsule locked until YYYY-MM-DD"
+→ Wait until this date to decrypt
+
+"Signature verification failed! Capsule may be tampered"
+→ Capsule was modified - DO NOT TRUST
+
+"Capsule or keys not found"
+→ Generate keys or create capsule first
+
+"Invalid capsule index"
+→ Check the capsule list and use correct number
+
+8.3 GETTING HELP
+----------------
+
+If problems persist:
+
+1. Check this manual thoroughly
+2. Review the README.md file
+3. Check terminal output for detailed errors
+4. Try the CLI version (often more informative)
+5. Restart the application
+6. Reboot your computer
+
+
+9. FAQ (FREQUENTLY ASKED QUESTIONS)
+================================================================================
+
+Q1: Can I change the unlock date after creating a capsule?
+
+A: No. The unlock date is cryptographically sealed in the capsule. This is
+   by design - it's a time capsule! If you need a different date, create a
+   new capsule.
+
+---
+
+Q2: What happens if I lose my keys?
+
+A: You CANNOT decrypt your capsules without the keys. Always keep backups!
+   The keys are in data/keys/user_keys.json.
+
+---
+
+Q3: Can someone else decrypt my capsules?
+
+A: Not without your private keys. The encryption is military-grade. Keep
+   your keys secret and secure.
+
+---
+
+Q4: Is my data sent to the cloud?
+
+A: NO. Everything stays on your computer. This is 100% local, no internet
+   needed after initial setup.
+
+---
+
+Q5: Can I edit a capsule after creation?
+
+A: No. Capsules are immutable (can't be changed). This ensures integrity.
+   Create a new capsule instead.
+
+---
+
+Q6: What's the maximum message length?
+
+A: 10,000 characters (about 2 pages of text). This is a soft limit and can
+   be increased if needed.
+
+---
+
+Q7: Can I create multiple capsules?
+
+A: Yes! Create as many as you want. Each has its own unlock date and message.
+
+---
+
+Q8: What if my computer's clock is wrong?
+
+A: The unlock check uses your system time. If your clock is wrong, the unlock
+   times will be wrong too. Keep your system time accurate.
+
+---
+
+Q9: Can I use this for files and images?
+
+A: Currently, only text messages are supported. For files, you'd need to
+   encode them as text (Base64) or wait for future updates.
+
+---
+
+Q10: Is this really quantum-safe?
+
+A: The current version uses classical cryptography (RSA/ECDSA) which is
+   vulnerable to quantum computers. It's called "quantum-safe" because it's
+   designed to be upgraded to true post-quantum algorithms (Kyber/Dilithium)
+   in the future.
+
+---
+
+Q11: How much disk space do capsules use?
+
+A: About 500 bytes + your message length. 1000 capsules ≈ 1 MB.
+
+---
+
+Q12: Can I share capsules with others?
+
+A: Yes, you can share the encrypted capsule file. But they need YOUR keys
+   to decrypt it. For secure sharing, exchange keys securely first.
+
+---
+
+Q13: What's the "QR capsule" feature?
+
+A: Some versions generate QR codes of capsules for easy sharing. This is
+   an advanced feature documented separately.
+
+---
+
+Q14: Can I run this on a server?
+
+A: Yes, but you'll need to configure it for production use (add authentication,
+   HTTPS, etc.). The current setup is for personal/local use.
+
+---
+
+Q15: Are there mobile apps?
+
+A: Not currently. The web interface works on mobile browsers, but there's
+   no native app yet.
+
+
+10. GLOSSARY
+================================================================================
+
+AES (Advanced Encryption Standard)
+   A military-grade encryption algorithm used to protect your messages.
+   Very secure and fast.
+
+Authentication
+   Proving that something is genuine and hasn't been modified.
+
+Base64
+   A way to convert binary data to text so it can be stored in JSON files.
+
+Capsule
+   An encrypted message with a time-lock. Cannot be read until unlock date.
+
+Ciphertext
+   Your message after encryption. Looks like random gibberish.
+
+Decryption
+   Converting encrypted data (ciphertext) back to readable text (plaintext).
+
+Digital Signature
+   A cryptographic proof that a message is authentic and hasn't been tampered
+   with. Like a wax seal on a letter.
+
+ECDSA (Elliptic Curve Digital Signature Algorithm)
+   The algorithm used to create digital signatures in this application.
+
+Encryption
+   Converting readable text (plaintext) to unreadable data (ciphertext) to
+   protect it from unauthorized access.
+
+JSON (JavaScript Object Notation)
+   A text format for storing data. Used to save capsules and keys.
+
+KEM (Key Encapsulation Mechanism)
+   A method to securely share encryption keys. Used to protect the AES key.
+
+Key (Cryptographic Key)
+   A secret number used for encryption and decryption. Like a password, but
+   much longer and more complex.
+
+Metadata
+   Information about the capsule (timestamp, unlock date) that's included
+   in the signature.
+
+PEM (Privacy Enhanced Mail)
+   A format for storing cryptographic keys as text.
+
+Plaintext
+   Your message before encryption or after decryption. Readable text.
+
+Post-Quantum Cryptography (PQC)
+   Encryption methods designed to resist attacks from quantum computers.
+
+Private Key
+   The secret key that must be kept confidential. Used for decryption and
+   signing.
+
+Public Key
+   The key that can be shared publicly. Used for encryption and verification.
+
+RSA
+   An encryption algorithm named after its inventors (Rivest-Shamir-Adleman).
+   Used in this application for key encapsulation.
+
+Signature Verification
+   Checking if a digital signature is valid to ensure data authenticity.
+
+Time-Lock
+   A restriction that prevents decryption before a specified date.
+
+Timestamp
+   The exact date and time when a capsule was created.
+
+Unlock Date
+   The date when a time capsule becomes available for decryption.
+
+
+================================================================================
+                         END OF USER GUIDE
+================================================================================
+
+Thank you for using Quantum-Safe Digital Time Capsule!
+
+Your future self will thank you for preserving these memories securely.
+
+For technical support or questions, refer to the DOCUMENTATION.txt file.
+For developer information, see TECHNICAL_SPECIFICATIONS.txt.
+
+Happy Time Capsule Creating! 🔒⏰

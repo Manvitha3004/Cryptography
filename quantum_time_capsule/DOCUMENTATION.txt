@@ -1,0 +1,1343 @@
+================================================================================
+                    QUANTUM-SAFE DIGITAL TIME CAPSULE
+                        COMPLETE PROJECT DOCUMENTATION
+================================================================================
+
+PROJECT OVERVIEW
+================================================================================
+
+Project Name: Quantum-Safe Digital Time Capsule
+Version: 1.0
+Created: October 2025
+Last Updated: November 27, 2025
+
+DESCRIPTION:
+This is a secure digital time capsule application that demonstrates post-quantum
+cryptography concepts using hybrid cryptographic systems. The application allows
+users to create encrypted messages that can only be decrypted after a specified
+unlock date, with quantum-resistant digital signatures for integrity verification.
+
+PURPOSE:
+- Demonstrate post-quantum cryptography principles
+- Provide time-locked message encryption
+- Ensure data integrity through digital signatures
+- Offer multiple user interfaces (CLI, GUI, Web)
+
+KEY FEATURES:
+- Post-Quantum Cryptography (PQC) key generation
+- Time-locked encrypted capsule creation
+- Digital signature verification
+- Multi-interface support (CLI, GUI, Web)
+- Secure key and capsule storage
+- QR code generation for capsules
+- Backup and restore functionality
+- Performance benchmarking
+
+TECHNOLOGY STACK:
+================================================================================
+
+BACKEND:
+- Python 3.9+
+- Flask (REST API framework)
+- Cryptography library (RSA, ECDSA, AES)
+- Fernet (symmetric encryption)
+- Base64 encoding
+
+FRONTEND:
+- React 18.3.1 (JavaScript framework)
+- TypeScript 4.9.5
+- Tailwind CSS 3.4.18 (styling)
+- Axios 1.12.2 (HTTP client)
+- Create React App 5.0.1
+
+CRYPTOGRAPHY:
+- RSA 2048-bit (simulating Kyber512 KEM)
+- ECDSA with SECP256R1 (simulating Dilithium2 signatures)
+- AES with Fernet (symmetric encryption)
+- SHA-256 (hashing)
+
+NOTE: The implementation uses classical cryptography (RSA + ECDSA) as a
+demonstration. For true post-quantum security, liboqs-python with Kyber512
+and Dilithium2 should be used in production environments.
+
+
+PROJECT ARCHITECTURE
+================================================================================
+
+DIRECTORY STRUCTURE:
+quantum_time_capsule/
+├── Backend Python Modules
+│   ├── api.py                 - Flask REST API server
+│   ├── capsule_main.py        - Command-line interface
+│   ├── gui_main.py            - Tkinter GUI interface
+│   ├── pqc_module.py          - Post-quantum cryptography functions
+│   ├── aes_module.py          - AES encryption/decryption
+│   ├── storage_module.py      - File storage operations
+│   └── utils.py               - Helper utilities
+│
+├── Data Storage
+│   ├── data/
+│   │   ├── keys/
+│   │   │   └── user_keys.json - Stored cryptographic keys
+│   │   └── capsules/          - Encrypted capsule files
+│   ├── backup/                - Backup ZIP archives
+│   └── qr_capsules/           - QR code images
+│
+├── Frontend Application
+│   └── frontend/
+│       ├── public/
+│       │   ├── index.html     - HTML template
+│       │   └── manifest.json  - PWA manifest
+│       ├── src/
+│       │   ├── App.tsx        - Main React component
+│       │   ├── App.css        - Component styles
+│       │   ├── index.tsx      - React entry point
+│       │   └── index.css      - Global styles
+│       ├── package.json       - Node dependencies
+│       ├── tsconfig.json      - TypeScript config
+│       ├── tailwind.config.js - Tailwind CSS config
+│       └── postcss.config.js  - PostCSS config
+│
+├── Configuration Files
+│   ├── requirements.txt       - Python dependencies
+│   ├── benchmark.csv          - Performance metrics
+│   ├── .gitignore            - Git ignore rules
+│   └── README.md             - Quick start guide
+│
+└── __pycache__/              - Python compiled bytecode
+
+
+SYSTEM ARCHITECTURE:
+================================================================================
+
+THREE-TIER ARCHITECTURE:
+
+1. PRESENTATION LAYER (Frontend)
+   - React-based web interface
+   - Tkinter desktop GUI
+   - Command-line interface
+
+2. APPLICATION LAYER (Backend)
+   - Flask REST API
+   - Python business logic
+   - Cryptographic operations
+
+3. DATA LAYER (Storage)
+   - JSON file storage
+   - Key management
+   - Capsule persistence
+
+
+COMPONENT INTERACTIONS:
+
+User Interface → REST API → Cryptographic Modules → Storage Layer
+     ↓              ↓              ↓                      ↓
+  (React/GUI)   (Flask)    (pqc/aes modules)    (JSON files)
+
+
+CRYPTOGRAPHIC WORKFLOW:
+================================================================================
+
+1. KEY GENERATION:
+   a. Generate RSA key pair (2048-bit) for Key Encapsulation
+   b. Generate ECDSA key pair (SECP256R1) for Digital Signatures
+   c. Serialize keys to PEM format
+   d. Encode keys as Base64 strings
+   e. Store keys in data/keys/user_keys.json
+
+2. CAPSULE CREATION:
+   a. User provides message and unlock date
+   b. Generate random AES-256 key
+   c. Encrypt AES key with RSA public key (KEM encapsulation)
+   d. Encrypt message with AES key using Fernet
+   e. Create metadata: timestamp|unlock_date|ciphertext|kem_ct
+   f. Sign metadata with ECDSA private key
+   g. Store capsule with: ciphertext, kem_ct, signature, metadata
+   h. Save to data/capsules/capsule_<timestamp>.json
+
+3. CAPSULE DECRYPTION:
+   a. Check if current date >= unlock date
+   b. Load capsule and verify existence
+   c. Reconstruct metadata for verification
+   d. Verify digital signature with ECDSA public key
+   e. Decrypt AES key with RSA private key (KEM decapsulation)
+   f. Decrypt message with recovered AES key
+   g. Display decrypted message to user
+
+4. SIGNATURE VERIFICATION:
+   a. Load capsule data
+   b. Reconstruct metadata string
+   c. Verify signature using ECDSA public key
+   d. Return verification status (authentic/tampered)
+
+
+MODULE SPECIFICATIONS
+================================================================================
+
+1. pqc_module.py
+----------------
+Purpose: Post-quantum cryptography operations (simulated with classical crypto)
+
+Functions:
+- generate_keys() → dict
+  Generates RSA and ECDSA key pairs
+  Returns: {kem_public, kem_secret, sig_public, sig_secret}
+  
+- encapsulate_key(kem_public_b64) → (ciphertext, shared_secret)
+  Simulates KEM by encrypting random AES key with RSA
+  Returns: Encrypted key and plaintext key as Base64
+  
+- decapsulate_key(kem_secret_b64, ciphertext_b64) → shared_secret
+  Decrypts AES key using RSA private key
+  Returns: Recovered AES key as Base64
+  
+- sign_data(data, sig_secret_b64) → signature
+  Signs data using ECDSA
+  Returns: Base64 encoded signature
+  
+- verify_signature(data, signature_b64, sig_public_b64) → bool
+  Verifies ECDSA signature
+  Returns: True if valid, False otherwise
+
+Technical Details:
+- RSA: 2048-bit keys, OAEP padding with SHA-256
+- ECDSA: SECP256R1 curve, SHA-256 hash
+- All keys serialized to PEM format
+- All outputs Base64 encoded for JSON storage
+
+
+2. aes_module.py
+----------------
+Purpose: Symmetric encryption using AES via Fernet
+
+Functions:
+- generate_aes_key() → str
+  Generates random Fernet-compatible AES key
+  Returns: Base64 encoded key
+  
+- encrypt_message(message, aes_key_b64) → ciphertext
+  Encrypts plaintext message using Fernet
+  Returns: Base64 encoded ciphertext
+  
+- decrypt_message(ciphertext_b64, aes_key_b64) → plaintext
+  Decrypts ciphertext using Fernet
+  Returns: Original plaintext message
+
+Technical Details:
+- Uses Fernet symmetric encryption (AES-128 in CBC mode)
+- Includes HMAC for authentication
+- Timestamp included in ciphertext
+- URL-safe Base64 encoding
+
+
+3. storage_module.py
+--------------------
+Purpose: Persistent storage for keys and capsules
+
+Functions:
+- save_keys(keys) → None
+  Saves key dictionary to data/keys/user_keys.json
+  Creates directory if it doesn't exist
+  
+- load_keys() → dict | None
+  Loads keys from JSON file
+  Returns None if file doesn't exist
+  
+- save_capsule(capsule_data) → None
+  Saves capsule to data/capsules/capsule_<timestamp>.json
+  Creates directory if needed
+  
+- load_capsule(timestamp) → dict | None
+  Loads specific capsule by timestamp
+  Returns None if not found
+  
+- list_capsules() → list[str]
+  Returns sorted list of capsule timestamps
+
+Storage Format:
+- Keys: Single JSON file with all key pairs
+- Capsules: One JSON file per capsule
+- Filename format: capsule_<ISO-timestamp>.json
+- Timestamps use format: YYYY-MM-DDTHH-MM-SS.ffffff
+
+
+4. utils.py
+-----------
+Purpose: Helper functions for time-lock and validation
+
+Functions:
+- is_unlocked(unlock_date_str) → bool
+  Checks if current date >= unlock date
+  Date format: YYYY-MM-DD
+  
+- get_current_timestamp() → str
+  Returns ISO format timestamp with colons replaced by hyphens
+  Format: YYYY-MM-DDTHH-MM-SS.ffffff
+  
+- hash_data(data) → str
+  Computes SHA-256 hash of data
+  Returns: Hex digest string
+  
+- validate_date(date_str) → bool
+  Validates date string format (YYYY-MM-DD)
+  Returns: True if valid ISO format
+
+
+5. capsule_main.py
+------------------
+Purpose: Command-line interface for time capsule operations
+
+Features:
+- Interactive menu-driven interface
+- Key generation with user feedback
+- Capsule creation with date validation
+- Capsule listing with lock status
+- Decryption with time-lock enforcement
+- Signature verification
+
+Menu Options:
+1. Generate PQC Keys
+2. Create Capsule
+3. View Capsules
+4. Decrypt Capsule
+5. Verify Capsule
+0. Exit
+
+User Flow:
+Generate Keys → Create Capsule → Wait for Unlock Date → Decrypt/Verify
+
+
+6. gui_main.py
+--------------
+Purpose: Tkinter-based graphical user interface
+
+Components:
+- Main window (800x600)
+- Text output area for logs
+- Control buttons for all operations
+- Dialog boxes for input
+- Color-coded status messages
+
+Features:
+- Visual feedback for operations
+- Scrollable output display
+- Modal dialogs for user input
+- Clear output functionality
+- Emoji status indicators
+
+GUI Layout:
+┌─────────────────────────────────────┐
+│ Quantum-Safe Digital Time Capsule   │
+├─────────────────────────────────────┤
+│                                     │
+│  [Output Text Area - 25 lines]     │
+│                                     │
+├─────────────────────────────────────┤
+│ [Generate Keys] [Create Capsule]   │
+│ [View Capsules] [Decrypt Capsule]  │
+│ [Verify Capsule] [Clear Output]    │
+│          [Exit]                     │
+└─────────────────────────────────────┘
+
+
+7. api.py
+---------
+Purpose: Flask REST API server for web interface
+
+Endpoints:
+
+POST /generate_keys
+- Request: None
+- Response: {success: bool, message: str, error?: str}
+- Generates and saves PQC keys
+
+POST /create_capsule
+- Request: {message: str, unlock_date: str}
+- Response: {success: bool, message: str, capsule?: obj, error?: str}
+- Creates encrypted capsule
+
+GET /capsules
+- Request: None
+- Response: {success: bool, capsules: array, error?: str}
+- Lists all capsules with status
+
+POST /decrypt_capsule
+- Request: {capsule_index: int}
+- Response: {success: bool, decrypted_message?: str, error?: str}
+- Decrypts unlocked capsule
+
+POST /verify_capsule
+- Request: {capsule_index: int}
+- Response: {success: bool, verified: bool, error?: str}
+- Verifies capsule signature
+
+Server Configuration:
+- Host: 0.0.0.0 (all interfaces)
+- Port: 5000
+- Debug: True (development)
+- CORS: Enabled for React frontend
+
+
+FRONTEND ARCHITECTURE
+================================================================================
+
+REACT APPLICATION STRUCTURE:
+
+Main Component (App.tsx):
+- State management for UI
+- API communication via Axios
+- Terminal-style output display
+- Modal dialogs for input
+
+State Variables:
+- output: string (terminal output)
+- message: string (capsule message)
+- unlockDate: string (unlock date)
+- capsuleIndex: string (selected capsule)
+- showModal: boolean (modal visibility)
+
+Key Features:
+- Real-time API response display
+- Terminal-themed output window
+- Color-coded operation buttons
+- Responsive modal dialogs
+- Timestamp display
+
+UI Components:
+1. Header Bar (gradient background)
+   - Project title
+   - Subtitle
+   - Current timestamp
+
+2. Sidebar (left panel)
+   - Key Management section
+   - Capsule Creation section
+   - Capsule Viewing section
+   - Operations section
+   - Clear button
+
+3. Output Panel (main area)
+   - Terminal-style display
+   - Monospace font (green on black)
+   - Auto-scrolling
+   - Command prompt style header
+
+4. Create Capsule Modal
+   - Message textarea
+   - Date picker
+   - Create/Cancel buttons
+
+
+STYLING SYSTEM:
+================================================================================
+
+Tailwind CSS Utilities:
+- Responsive design
+- Gradient backgrounds
+- Shadow effects
+- Hover transitions
+- Color themes
+
+Color Scheme:
+- Primary: Indigo (600, 700)
+- Success: Green (200, 300, 800)
+- Warning: Amber (200, 300, 800)
+- Error: Red (200, 300, 800)
+- Info: Purple (200, 300, 800)
+- Terminal: Gray (900) background, Green (400) text
+
+Custom CSS Features:
+- Smooth button transitions
+- Hover elevation effects
+- Custom scrollbar styling
+- Fade-in animations
+- Terminal window styling
+
+
+DATA STRUCTURES
+================================================================================
+
+1. KEY STORAGE FORMAT (user_keys.json):
+{
+  "kem_public": "base64_encoded_rsa_public_key",
+  "kem_secret": "base64_encoded_rsa_private_key",
+  "sig_public": "base64_encoded_ecdsa_public_key",
+  "sig_secret": "base64_encoded_ecdsa_private_key"
+}
+
+2. CAPSULE STORAGE FORMAT (capsule_<timestamp>.json):
+{
+  "timestamp": "2025-11-27T10-04-07.066163",
+  "unlock_date": "2025-11-27",
+  "ciphertext": "base64_encoded_encrypted_message",
+  "kem_ct": "base64_encoded_encrypted_aes_key",
+  "signature": "base64_encoded_ecdsa_signature"
+}
+
+3. API RESPONSE FORMATS:
+
+Success Response:
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": { ... }  // Optional additional data
+}
+
+Error Response:
+{
+  "success": false,
+  "error": "Error description"
+}
+
+Capsule List Response:
+{
+  "success": true,
+  "capsules": [
+    {
+      "timestamp": "2025-11-27T10-04-07.066163",
+      "unlock_date": "2025-11-27",
+      "status": "unlocked" | "locked"
+    }
+  ]
+}
+
+
+SECURITY CONSIDERATIONS
+================================================================================
+
+CRYPTOGRAPHIC SECURITY:
+
+1. Key Strength:
+   - RSA: 2048-bit keys (considered secure until ~2030)
+   - ECDSA: 256-bit curve (equivalent to 3072-bit RSA)
+   - AES: 128-bit keys via Fernet (sufficient for most use cases)
+
+2. Current Implementation Limitations:
+   - Uses classical cryptography (RSA/ECDSA)
+   - Vulnerable to quantum attacks via Shor's algorithm
+   - Suitable for demonstration, not production
+
+3. Post-Quantum Upgrade Path:
+   - Replace RSA with Kyber512 (NIST PQC standard)
+   - Replace ECDSA with Dilithium2 (NIST PQC standard)
+   - Use liboqs-python library
+   - Maintain same API and data structures
+
+STORAGE SECURITY:
+
+1. Key Management:
+   - Keys stored in JSON format (unencrypted)
+   - File system permissions protect keys
+   - Keys should be encrypted at rest in production
+   - Consider hardware security module (HSM) for production
+
+2. Capsule Storage:
+   - Encrypted capsules in JSON files
+   - Signatures prevent tampering
+   - Time-lock prevents early decryption
+   - Backup mechanism for disaster recovery
+
+3. API Security:
+   - CORS enabled for React frontend
+   - No authentication implemented (development)
+   - Should add JWT/OAuth in production
+   - Rate limiting recommended
+
+OPERATIONAL SECURITY:
+
+1. Input Validation:
+   - Date format validation
+   - Message length checking
+   - Capsule index bounds checking
+   - Type validation on all inputs
+
+2. Error Handling:
+   - Try-catch blocks on all operations
+   - Detailed error messages for debugging
+   - User-friendly error reporting
+   - No sensitive data in error messages
+
+3. Logging:
+   - Console output for debugging
+   - No persistent logs implemented
+   - Should add audit logging in production
+
+
+INSTALLATION & SETUP
+================================================================================
+
+PREREQUISITES:
+- Python 3.9 or higher
+- Node.js 14 or higher
+- npm (comes with Node.js)
+- Windows/Linux/macOS
+
+PYTHON DEPENDENCIES:
+cryptography==Latest
+flask==Latest
+flask-cors==Latest
+
+FRONTEND DEPENDENCIES:
+react@18.3.1
+typescript@4.9.5
+axios@1.12.2
+tailwindcss@3.4.18
+react-scripts@5.0.1
+
+INSTALLATION STEPS:
+
+1. Install Python Dependencies:
+   cd d:\Cryptography\quantum_time_capsule
+   pip install -r requirements.txt
+
+2. Install Frontend Dependencies:
+   cd frontend
+   npm install
+
+3. Verify Installation:
+   python --version  # Should be 3.9+
+   node --version    # Should be 14+
+   npm --version
+
+
+RUNNING THE APPLICATION
+================================================================================
+
+METHOD 1: WEB INTERFACE (RECOMMENDED)
+
+Step 1: Start Backend API
+   Terminal 1:
+   cd d:\Cryptography\quantum_time_capsule
+   python api.py
+   
+   Output: 
+   * Running on http://0.0.0.0:5000
+   * Debug mode: on
+
+Step 2: Start Frontend
+   Terminal 2:
+   cd d:\Cryptography\quantum_time_capsule\frontend
+   npm start
+   
+   Output:
+   Compiled successfully!
+   Local: http://localhost:3000
+   
+   Browser automatically opens to http://localhost:3000
+
+METHOD 2: COMMAND-LINE INTERFACE
+
+   cd d:\Cryptography\quantum_time_capsule
+   python capsule_main.py
+   
+   Follow menu prompts:
+   1. Generate Keys first
+   2. Create Capsule
+   3. View/Decrypt/Verify capsules
+
+METHOD 3: DESKTOP GUI
+
+   cd d:\Cryptography\quantum_time_capsule
+   python gui_main.py
+   
+   GUI window opens with buttons for all operations
+
+
+USAGE GUIDE
+================================================================================
+
+WORKFLOW: CREATING YOUR FIRST CAPSULE
+
+Step 1: Generate Cryptographic Keys
+   Web Interface:
+   - Click "Generate Keys" button
+   - Wait for confirmation message
+   - Keys saved to data/keys/user_keys.json
+   
+   CLI:
+   - Choose option 1 from menu
+   - See success message
+   
+   Result: RSA and ECDSA key pairs generated and stored
+
+Step 2: Create a Time Capsule
+   Web Interface:
+   - Click "New Capsule" button
+   - Enter your message in textarea
+   - Select unlock date from date picker
+   - Click "Create" button
+   
+   CLI:
+   - Choose option 2 from menu
+   - Type your message
+   - Enter unlock date (YYYY-MM-DD format)
+   
+   Result: Encrypted capsule saved with timestamp
+
+Step 3: View Capsule List
+   Web Interface:
+   - Click "List All" button
+   - See capsules with status (🔒 Locked / 🔓 Unlocked)
+   
+   CLI:
+   - Choose option 3 from menu
+   - View numbered list of capsules
+   
+   Result: List shows timestamp, unlock date, and status
+
+Step 4: Decrypt Capsule (After Unlock Date)
+   Web Interface:
+   - Enter capsule number in "Capsule #" field
+   - Click "Decrypt" button
+   - View decrypted message in terminal output
+   
+   CLI:
+   - Choose option 4 from menu
+   - Enter capsule number
+   - View decrypted message
+   
+   Result: Original message displayed if unlocked
+
+Step 5: Verify Capsule Integrity
+   Web Interface:
+   - Enter capsule number
+   - Click "Verify" button
+   - See verification status
+   
+   CLI:
+   - Choose option 5 from menu
+   - Enter capsule number
+   - See verification result
+   
+   Result: Confirms capsule authenticity
+
+
+EXAMPLE USAGE SCENARIOS:
+
+Scenario 1: Personal Time Capsule
+   Message: "Dear future me, I hope you achieved your goals!"
+   Unlock Date: 2030-01-01
+   Use Case: Self-reflection on New Year's Day 2030
+
+Scenario 2: Project Milestone
+   Message: "Project completed successfully on Nov 27, 2025"
+   Unlock Date: 2026-11-27
+   Use Case: One-year anniversary review
+
+Scenario 3: Secret Message
+   Message: "Confidential data for authorized personnel"
+   Unlock Date: 2025-12-31
+   Use Case: Timed information release
+
+
+API DOCUMENTATION
+================================================================================
+
+BASE URL: http://localhost:5000
+
+ENDPOINT 1: Generate Keys
+--------------------------
+POST /generate_keys
+
+Description: Generates new RSA and ECDSA key pairs and saves them
+
+Request:
+  Method: POST
+  Headers: None required
+  Body: None
+
+Response (Success):
+  Status: 200 OK
+  Body: {
+    "success": true,
+    "message": "PQC Keys generated and saved!"
+  }
+
+Response (Error):
+  Status: 500 Internal Server Error
+  Body: {
+    "success": false,
+    "error": "Error description"
+  }
+
+Example (curl):
+  curl -X POST http://localhost:5000/generate_keys
+
+Example (JavaScript):
+  const response = await axios.post('http://localhost:5000/generate_keys');
+
+
+ENDPOINT 2: Create Capsule
+---------------------------
+POST /create_capsule
+
+Description: Creates encrypted time capsule with message and unlock date
+
+Request:
+  Method: POST
+  Headers: Content-Type: application/json
+  Body: {
+    "message": "Your secret message",
+    "unlock_date": "2025-12-31"
+  }
+
+Response (Success):
+  Status: 200 OK
+  Body: {
+    "success": true,
+    "message": "Capsule created successfully (unlock date: 2025-12-31)",
+    "capsule": {
+      "timestamp": "2025-11-27T10-04-07.066163",
+      "unlock_date": "2025-12-31",
+      "ciphertext": "encrypted_data...",
+      "kem_ct": "encrypted_key...",
+      "signature": "signature..."
+    }
+  }
+
+Response (Error):
+  Status: 400 Bad Request / 500 Internal Server Error
+  Body: {
+    "success": false,
+    "error": "Error description"
+  }
+
+Example (curl):
+  curl -X POST http://localhost:5000/create_capsule \
+    -H "Content-Type: application/json" \
+    -d '{"message":"Hello Future","unlock_date":"2025-12-31"}'
+
+
+ENDPOINT 3: List Capsules
+--------------------------
+GET /capsules
+
+Description: Retrieves list of all capsules with status
+
+Request:
+  Method: GET
+  Headers: None required
+  Body: None
+
+Response (Success):
+  Status: 200 OK
+  Body: {
+    "success": true,
+    "capsules": [
+      {
+        "timestamp": "2025-11-27T10-04-07.066163",
+        "unlock_date": "2025-12-31",
+        "status": "locked"
+      },
+      {
+        "timestamp": "2025-11-27T10-08-05.309034",
+        "unlock_date": "2025-11-27",
+        "status": "unlocked"
+      }
+    ]
+  }
+
+Example (curl):
+  curl http://localhost:5000/capsules
+
+
+ENDPOINT 4: Decrypt Capsule
+----------------------------
+POST /decrypt_capsule
+
+Description: Decrypts capsule if unlock date has passed
+
+Request:
+  Method: POST
+  Headers: Content-Type: application/json
+  Body: {
+    "capsule_index": 0
+  }
+
+Response (Success):
+  Status: 200 OK
+  Body: {
+    "success": true,
+    "message": "✅ Decryption Successful!",
+    "decrypted_message": "Your original message",
+    "signature_verified": true,
+    "timestamp": "2025-11-27T10-04-07.066163",
+    "unlock_date": "2025-11-27"
+  }
+
+Response (Error - Locked):
+  Status: 400 Bad Request
+  Body: {
+    "success": false,
+    "error": "Capsule locked until 2025-12-31"
+  }
+
+Response (Error - Invalid Signature):
+  Status: 400 Bad Request
+  Body: {
+    "success": false,
+    "error": "Signature verification failed! Capsule may be tampered."
+  }
+
+
+ENDPOINT 5: Verify Capsule
+---------------------------
+POST /verify_capsule
+
+Description: Verifies digital signature of capsule
+
+Request:
+  Method: POST
+  Headers: Content-Type: application/json
+  Body: {
+    "capsule_index": 0
+  }
+
+Response (Success):
+  Status: 200 OK
+  Body: {
+    "success": true,
+    "verified": true,
+    "message": "✅ Signature verified - Capsule is authentic!",
+    "timestamp": "2025-11-27T10-04-07.066163",
+    "unlock_date": "2025-11-27"
+  }
+
+
+ERROR HANDLING
+================================================================================
+
+HTTP STATUS CODES:
+- 200 OK: Successful operation
+- 400 Bad Request: Invalid input or locked capsule
+- 500 Internal Server Error: Server-side error
+
+COMMON ERROR MESSAGES:
+
+1. "No keys found. Please generate keys first."
+   Solution: Call /generate_keys endpoint first
+
+2. "Message cannot be empty."
+   Solution: Provide non-empty message in request
+
+3. "Invalid date format. Use YYYY-MM-DD."
+   Solution: Format date as YYYY-MM-DD (e.g., 2025-12-31)
+
+4. "Capsule locked until <date>"
+   Solution: Wait until unlock date to decrypt
+
+5. "Signature verification failed! Capsule may be tampered."
+   Solution: Capsule data has been modified; do not trust contents
+
+6. "Capsule or keys not found."
+   Solution: Verify capsule exists and keys are generated
+
+
+PERFORMANCE BENCHMARKS
+================================================================================
+
+MEASURED OPERATIONS (from benchmark.csv):
+
+Operation              Time (seconds)    Description
+---------------------------------------------------------------
+PQC Key Generation     0.161 s          RSA + ECDSA key pair
+KEM Encapsulation      0.001 s          Encrypt AES key
+KEM Decapsulation      0.053 s          Decrypt AES key
+Dilithium Sign         0.049 s          Sign metadata
+Dilithium Verify       0.0001 s         Verify signature
+RSA Key Generation     0.052 s          2048-bit RSA
+RSA Encrypt            0.0001 s         Encrypt small data
+RSA Decrypt            0.001 s          Decrypt small data
+AES Encrypt            0.001 s          Encrypt message
+AES Decrypt            0.00009 s        Decrypt message
+
+PERFORMANCE ANALYSIS:
+
+Fastest Operations:
+1. AES Decryption: 0.09 ms
+2. Signature Verification: 0.13 ms
+3. RSA Encryption: 0.12 ms
+
+Slowest Operations:
+1. PQC Key Generation: 161 ms
+2. KEM Decapsulation: 53 ms
+3. RSA Key Generation: 52 ms
+
+SCALABILITY:
+- Key generation: One-time operation (161 ms)
+- Capsule creation: ~150 ms total
+- Capsule decryption: ~54 ms total
+- Can handle hundreds of capsules efficiently
+
+
+TROUBLESHOOTING
+================================================================================
+
+PROBLEM 1: Backend API won't start
+Symptoms: Error when running "python api.py"
+Causes:
+  - Port 5000 already in use
+  - Python dependencies not installed
+  - Wrong Python version
+Solutions:
+  1. Check port: netstat -ano | findstr :5000
+  2. Install dependencies: pip install -r requirements.txt
+  3. Verify Python: python --version (should be 3.9+)
+  4. Kill process using port: taskkill /PID <pid> /F
+
+PROBLEM 2: Frontend won't start
+Symptoms: Error when running "npm start"
+Causes:
+  - Node modules not installed
+  - Port 3000 in use
+  - Node.js version too old
+Solutions:
+  1. Install dependencies: npm install
+  2. Clear cache: npm cache clean --force
+  3. Update Node.js to v14+
+  4. Change port: set PORT=3001 && npm start
+
+PROBLEM 3: CORS errors in browser
+Symptoms: "Access to XMLHttpRequest blocked by CORS policy"
+Causes:
+  - Backend not running
+  - CORS not enabled in Flask
+Solutions:
+  1. Verify api.py has: CORS(app)
+  2. Check backend is running on port 5000
+  3. Clear browser cache
+
+PROBLEM 4: Cannot decrypt capsule
+Symptoms: "Capsule locked until <date>"
+Causes:
+  - Current date before unlock date
+  - System time incorrect
+Solutions:
+  1. Wait until unlock date
+  2. For testing, set unlock_date to today or past
+  3. Check system time: date (verify correct)
+
+PROBLEM 5: Signature verification fails
+Symptoms: "Signature verification failed"
+Causes:
+  - Capsule file modified manually
+  - Keys changed after capsule creation
+  - Data corruption
+Solutions:
+  1. Do not manually edit capsule JSON files
+  2. Use same keys that created the capsule
+  3. Restore from backup if available
+
+PROBLEM 6: Keys not found error
+Symptoms: "No keys found. Please generate keys first."
+Causes:
+  - Keys never generated
+  - user_keys.json deleted
+  - Wrong working directory
+Solutions:
+  1. Generate keys using interface
+  2. Check data/keys/user_keys.json exists
+  3. Verify running from project root directory
+
+
+DEVELOPMENT NOTES
+================================================================================
+
+CODE ORGANIZATION:
+
+Backend Modules:
+- Separation of concerns (crypto, storage, API)
+- Reusable functions across interfaces
+- Consistent error handling
+- Type hints for clarity
+
+Frontend Structure:
+- Single-page application (SPA)
+- Component-based architecture
+- State management with React hooks
+- Responsive design with Tailwind
+
+DESIGN DECISIONS:
+
+1. Why JSON Storage?
+   - Simple implementation
+   - Human-readable format
+   - Easy debugging
+   - Suitable for small-scale deployment
+   - For production: Use database (PostgreSQL, MongoDB)
+
+2. Why Three Interfaces?
+   - CLI: Quick testing and automation
+   - GUI: Desktop users without web browser
+   - Web: Modern, user-friendly, most feature-rich
+
+3. Why Base64 Encoding?
+   - JSON-compatible (no binary data)
+   - Text-based transmission
+   - Easy debugging
+   - Standard encoding for web applications
+
+4. Why Simulated PQC?
+   - liboqs installation issues on Windows
+   - Demonstration purposes
+   - Easy to upgrade to real PQC later
+   - Same API structure as production version
+
+
+FUTURE ENHANCEMENTS
+================================================================================
+
+PLANNED FEATURES:
+
+1. Authentication & Authorization
+   - User accounts and login
+   - JWT token authentication
+   - Role-based access control
+   - Multi-user support
+
+2. Database Integration
+   - Replace JSON with PostgreSQL
+   - Better scalability
+   - Transaction support
+   - Query optimization
+
+3. Real Post-Quantum Cryptography
+   - Integrate liboqs-python
+   - Use Kyber512 for KEM
+   - Use Dilithium2 for signatures
+   - NIST PQC standards compliance
+
+4. Cloud Storage Support
+   - AWS S3 integration
+   - Azure Blob Storage
+   - Google Cloud Storage
+   - Encrypted cloud backups
+
+5. Advanced Features
+   - Scheduled email notifications
+   - Multi-recipient capsules
+   - File attachment support
+   - Image/video encryption
+   - Bulk operations
+
+6. Mobile Applications
+   - React Native mobile app
+   - iOS and Android support
+   - Push notifications
+   - Biometric authentication
+
+7. Audit Logging
+   - All operations logged
+   - Tamper-proof logs
+   - Export to SIEM systems
+   - Compliance reporting
+
+8. Backup & Recovery
+   - Automated backups
+   - Restore functionality
+   - Versioning support
+   - Disaster recovery plan
+
+
+TESTING GUIDE
+================================================================================
+
+MANUAL TESTING CHECKLIST:
+
+✓ Backend API Tests:
+  [ ] Generate keys successfully
+  [ ] Create capsule with valid data
+  [ ] Create capsule with invalid date
+  [ ] Create capsule with empty message
+  [ ] List all capsules
+  [ ] Decrypt unlocked capsule
+  [ ] Attempt decrypt locked capsule
+  [ ] Verify valid signature
+  [ ] Verify tampered capsule
+
+✓ Frontend Tests:
+  [ ] All buttons clickable
+  [ ] Modal opens and closes
+  [ ] Input validation works
+  [ ] Terminal output updates
+  [ ] Capsule list displays correctly
+  [ ] Error messages show properly
+  [ ] Date picker functional
+
+✓ CLI Tests:
+  [ ] Menu displays correctly
+  [ ] Each menu option works
+  [ ] Input validation
+  [ ] Error handling
+  [ ] Graceful exit
+
+✓ GUI Tests:
+  [ ] Window opens correctly
+  [ ] All buttons functional
+  [ ] Dialogs work
+  [ ] Output scrolls
+  [ ] Emoji display correctly
+
+AUTOMATED TESTING:
+- Unit tests for crypto functions
+- Integration tests for API endpoints
+- End-to-end tests for workflows
+- Performance tests for benchmarking
+
+
+DEPLOYMENT GUIDE
+================================================================================
+
+DEVELOPMENT DEPLOYMENT:
+- Current setup suitable for local development
+- Backend: python api.py
+- Frontend: npm start
+- No production hardening
+
+PRODUCTION DEPLOYMENT CONSIDERATIONS:
+
+1. Backend:
+   - Use production WSGI server (Gunicorn, uWSGI)
+   - Disable debug mode
+   - Use environment variables for config
+   - Set up HTTPS with SSL certificates
+   - Implement rate limiting
+   - Add authentication
+
+2. Frontend:
+   - Build production bundle: npm run build
+   - Serve static files with Nginx/Apache
+   - Enable gzip compression
+   - Configure CDN for assets
+   - Set up HTTPS
+
+3. Infrastructure:
+   - Docker containerization
+   - Kubernetes orchestration
+   - Load balancing
+   - Auto-scaling
+   - Monitoring and alerts
+
+4. Security:
+   - Encrypt keys at rest
+   - Use HSM for key storage
+   - Implement WAF (Web Application Firewall)
+   - Regular security audits
+   - Penetration testing
+
+
+MAINTENANCE
+================================================================================
+
+REGULAR MAINTENANCE TASKS:
+
+Daily:
+- Monitor server logs
+- Check error rates
+- Verify backup completion
+
+Weekly:
+- Review disk space usage
+- Check for security updates
+- Analyze performance metrics
+
+Monthly:
+- Update dependencies
+- Review and rotate logs
+- Test disaster recovery
+- Security vulnerability scan
+
+Quarterly:
+- Major version updates
+- Performance optimization
+- Code review and refactoring
+
+
+LICENSING & CREDITS
+================================================================================
+
+Project: Quantum-Safe Digital Time Capsule
+License: Not specified (Add your license)
+Author: Not specified (Add author information)
+
+DEPENDENCIES:
+
+Python:
+- cryptography: BSD License
+- Flask: BSD License
+- flask-cors: MIT License
+
+JavaScript:
+- React: MIT License
+- TypeScript: Apache License 2.0
+- Tailwind CSS: MIT License
+- Axios: MIT License
+
+ACKNOWLEDGMENTS:
+- NIST Post-Quantum Cryptography Project
+- Open Quantum Safe (liboqs) team
+- Cryptography.io contributors
+
+
+CONTACT & SUPPORT
+================================================================================
+
+For issues, questions, or contributions:
+- GitHub: [Add repository URL]
+- Email: [Add contact email]
+- Documentation: [Add documentation URL]
+
+Report bugs:
+- Use GitHub Issues
+- Provide detailed description
+- Include error messages
+- Specify environment details
+
+
+GLOSSARY
+================================================================================
+
+AES: Advanced Encryption Standard, symmetric encryption algorithm
+API: Application Programming Interface
+Base64: Binary-to-text encoding scheme
+CORS: Cross-Origin Resource Sharing
+ECDSA: Elliptic Curve Digital Signature Algorithm
+Fernet: Symmetric encryption using AES in CBC mode with authentication
+JSON: JavaScript Object Notation
+JWT: JSON Web Token
+KEM: Key Encapsulation Mechanism
+NIST: National Institute of Standards and Technology
+PEM: Privacy Enhanced Mail, key format
+PQC: Post-Quantum Cryptography
+REST: Representational State Transfer
+RSA: Rivest-Shamir-Adleman, asymmetric encryption algorithm
+SHA-256: Secure Hash Algorithm 256-bit
+SPA: Single-Page Application
+
+Dilithium2: NIST PQC standard for digital signatures
+Kyber512: NIST PQC standard for key encapsulation
+
+Time Capsule: Encrypted message with time-based unlock
+Time-Lock: Restriction preventing early decryption
+Encapsulation: Process of encrypting a symmetric key
+Decapsulation: Process of decrypting a symmetric key
+Digital Signature: Cryptographic proof of authenticity
+
+
+VERSION HISTORY
+================================================================================
+
+Version 1.0 (November 2025)
+- Initial release
+- Web, CLI, and GUI interfaces
+- Simulated PQC using RSA and ECDSA
+- Time-locked capsule functionality
+- Digital signature verification
+- JSON-based storage
+- React frontend with Tailwind CSS
+- Flask REST API
+- Benchmark data collection
+
+================================================================================
+                         END OF DOCUMENTATION
+================================================================================

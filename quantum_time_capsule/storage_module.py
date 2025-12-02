@@ -21,8 +21,10 @@ def save_keys(keys):
         keys (dict): Keys dictionary from generate_keys()
     """
     os.makedirs(os.path.dirname(KEYS_FILE), exist_ok=True)
-    with open(KEYS_FILE, 'w') as f:
-        json.dump(keys, f, indent=2)
+    with open(KEYS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(keys, f, indent=2, ensure_ascii=False)
+        f.flush()  # Ensure data is written to disk
+        os.fsync(f.fileno())  # Force write to disk
 
 
 def load_keys():
@@ -34,8 +36,12 @@ def load_keys():
     """
     if not os.path.exists(KEYS_FILE):
         return None
-    with open(KEYS_FILE, 'r') as f:
-        return json.load(f)
+    try:
+        with open(KEYS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error loading keys: {e}")
+        return None
 
 
 def save_capsule(capsule_data):
@@ -50,8 +56,10 @@ def save_capsule(capsule_data):
     filename = f"capsule_{timestamp}.json"
     filepath = os.path.join(CAPSULES_DIR, filename)
     
-    with open(filepath, 'w') as f:
-        json.dump(capsule_data, f, indent=2)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(capsule_data, f, indent=2, ensure_ascii=False)
+        f.flush()  # Ensure data is written to disk
+        os.fsync(f.fileno())  # Force write to disk
 
 
 def load_capsule(timestamp):
@@ -70,8 +78,12 @@ def load_capsule(timestamp):
     if not os.path.exists(filepath):
         return None
     
-    with open(filepath, 'r') as f:
-        return json.load(f)
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error loading capsule {timestamp}: {e}")
+        return None
 
 
 def list_capsules():
@@ -82,12 +94,17 @@ def list_capsules():
         list: List of timestamps
     """
     if not os.path.exists(CAPSULES_DIR):
+        os.makedirs(CAPSULES_DIR, exist_ok=True)
         return []
     
     capsules = []
-    for filename in os.listdir(CAPSULES_DIR):
-        if filename.startswith("capsule_") and filename.endswith(".json"):
-            timestamp = filename[8:-5]  # Remove "capsule_" and ".json"
-            capsules.append(timestamp)
+    try:
+        for filename in os.listdir(CAPSULES_DIR):
+            if filename.startswith("capsule_") and filename.endswith(".json"):
+                timestamp = filename[8:-5]  # Remove "capsule_" and ".json"
+                capsules.append(timestamp)
+    except OSError as e:
+        print(f"Error listing capsules: {e}")
+        return []
     
     return sorted(capsules)
