@@ -1,4 +1,4 @@
-# 🔐 Quantum-Safe Digital Time Capsule
+# Safe Digital Time Capsule
 
 A **post-quantum secure** digital time capsule that lets you encrypt a message (or file) today and ensure it can **only be opened after a specified future date** — even in a world with powerful quantum computers.
 
